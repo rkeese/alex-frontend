@@ -38,41 +38,61 @@ const handleRegister = async () => {
 </script>
 
 <template>
-    <div class="flex items-center justify-center min-h-screen bg-surface-100 dark:bg-surface-900 p-4">
-        <Card class="w-full max-w-md shadow-xl">
-            <template #title>
-                <div class="text-center mb-4">
-                    <h1 class="text-3xl font-bold text-primary-600 mb-2">Alex Club</h1>
-                    <span class="text-surface-500 dark:text-surface-400 text-base font-normal">Create a new account</span>
+    <div class="flex min-h-screen bg-surface-50 dark:bg-surface-950">
+        <!-- Left Side - Image/Brand -->
+        <div class="hidden lg:flex w-1/2 bg-primary-600 items-center justify-center relative overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-br from-primary-500 to-primary-800 opacity-90"></div>
+            <div class="relative z-10 text-center text-white p-12">
+                <div class="mb-6 text-6xl font-bold">Alex Club</div>
+                <p class="text-xl text-primary-100 max-w-md mx-auto">
+                    Join us today. Start managing your club efficiently.
+                </p>
+            </div>
+            <!-- Decorative circles -->
+            <div class="absolute -bottom-24 -left-24 w-96 h-96 bg-white opacity-10 rounded-full blur-3xl"></div>
+            <div class="absolute -top-24 -right-24 w-96 h-96 bg-white opacity-10 rounded-full blur-3xl"></div>
+        </div>
+
+        <!-- Right Side - Form -->
+        <div class="w-full lg:w-1/2 flex items-center justify-center p-8">
+            <div class="w-full max-w-md">
+                <div class="text-center mb-8 lg:text-left">
+                    <h1 class="text-3xl font-bold text-surface-900 dark:text-surface-0 mb-2">Create Account</h1>
+                    <p class="text-surface-500 dark:text-surface-400">Sign up to get started.</p>
                 </div>
-            </template>
-            <template #content>
-                <form @submit.prevent="handleRegister" class="flex flex-col gap-6 mt-4">
+
+                <form @submit.prevent="handleRegister" class="flex flex-col gap-6">
                     <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
                     
-                    <FloatLabel>
-                        <InputText id="email" v-model="email" class="w-full" type="email" required />
-                        <label for="email">Email Address</label>
-                    </FloatLabel>
+                    <div class="flex flex-col gap-2">
+                        <label for="email" class="font-medium text-surface-900 dark:text-surface-0">Email</label>
+                        <InputText id="email" v-model="email" class="w-full" type="email" placeholder="Enter your email" required />
+                    </div>
 
-                    <FloatLabel>
-                        <Password id="password" v-model="password" class="w-full" :feedback="true" toggleMask required />
-                        <label for="password">Password</label>
-                    </FloatLabel>
+                    <div class="flex flex-col gap-2">
+                        <label for="password" class="font-medium text-surface-900 dark:text-surface-0">Password</label>
+                        <Password id="password" v-model="password" class="w-full" :feedback="true" toggleMask inputClass="w-full" placeholder="Create a password" required />
+                    </div>
 
-                    <FloatLabel>
-                        <Password id="confirmPassword" v-model="confirmPassword" class="w-full" :feedback="false" toggleMask required />
-                        <label for="confirmPassword">Confirm Password</label>
-                    </FloatLabel>
+                    <div class="flex flex-col gap-2">
+                        <label for="confirmPassword" class="font-medium text-surface-900 dark:text-surface-0">Confirm Password</label>
+                        <Password id="confirmPassword" v-model="confirmPassword" class="w-full" :feedback="false" toggleMask inputClass="w-full" placeholder="Confirm your password" required />
+                    </div>
 
-                    <Button type="submit" label="Register" :loading="loading" class="w-full" />
+                    <Button type="submit" label="Create Account" :loading="loading" class="w-full" />
                     
                     <div class="text-center mt-4">
                         <span class="text-surface-600 dark:text-surface-300">Already have an account? </span>
-                        <router-link to="/login" class="text-primary-600 hover:text-primary-700 font-medium">Login</router-link>
+                        <router-link to="/login" class="text-primary-600 hover:text-primary-700 font-medium">Sign in</router-link>
                     </div>
                 </form>
-            </template>
-        </Card>
+            </div>
+        </div>
     </div>
 </template>
+
+<style scoped>
+:deep(.p-password-input) {
+    width: 100%;
+}
+</style>

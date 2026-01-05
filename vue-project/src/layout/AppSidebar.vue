@@ -20,19 +20,21 @@ const items = ref([
         ]
     },
     { label: 'Calendar', icon: 'pi pi-calendar', command: () => router.push('/calendar') },
-    { label: 'Documents', icon: 'pi pi-file', command: () => router.push('/documents') },
-    { separator: true },
-    { 
-        label: 'Logout', 
-        icon: 'pi pi-sign-out', 
-        command: () => {
-            authStore.logout();
-            router.push('/login');
-        } 
-    }
+    { label: 'Documents', icon: 'pi pi-file', command: () => router.push('/documents') }
 ]);
 </script>
 
 <template>
-    <Menu :model="items" class="w-full border-none" />
+    <div class="flex flex-col h-full">
+        <div class="p-6 flex items-center gap-3">
+            <div class="w-8 h-8 rounded bg-primary-600 flex items-center justify-center text-white font-bold text-xl">A</div>
+            <span class="font-bold text-xl text-surface-900 dark:text-surface-0">Alex Club</span>
+        </div>
+        <div class="flex-1 px-4">
+            <Menu :model="items" class="w-full border-none bg-transparent" />
+        </div>
+        <div class="p-4 text-xs text-center text-surface-500">
+            v1.0.0
+        </div>
+    </div>
 </template>
