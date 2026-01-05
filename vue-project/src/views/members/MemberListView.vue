@@ -62,7 +62,10 @@ const deleteMember = async (id: string) => {
     <div class="card">
         <div class="flex justify-between items-center mb-4">
             <h1 class="text-2xl font-bold text-gray-800">Members</h1>
-            <Button label="New Member" icon="pi pi-plus" @click="router.push('/members/create')" />
+            <div class="flex gap-2">
+                <Button label="Import" icon="pi pi-upload" severity="secondary" @click="router.push('/members/import')" />
+                <Button label="New Member" icon="pi pi-plus" @click="router.push('/members/create')" />
+            </div>
         </div>
 
         <DataTable :value="members" :loading="loading" paginator :rows="10" :rowsPerPageOptions="[5, 10, 20, 50]"

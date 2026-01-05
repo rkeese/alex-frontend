@@ -6,6 +6,7 @@ import RegisterView from '../views/RegisterView.vue'
 import PlaceholderView from '../views/PlaceholderView.vue'
 import MemberListView from '../views/members/MemberListView.vue'
 import MemberForm from '../views/members/MemberForm.vue'
+import MemberImportView from '../views/members/MemberImportView.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({
@@ -41,6 +42,11 @@ const router = createRouter({
           path: 'members/create',
           name: 'members-create',
           component: MemberForm,
+        },
+        {
+          path: 'members/import',
+          name: 'members-import',
+          component: MemberImportView,
         },
         {
           path: 'members/:id/edit',

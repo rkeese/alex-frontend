@@ -119,6 +119,26 @@ class ApiClient {
         });
     }
 
+    async importMembers(file: File): Promise<void> {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const headers = this.getHeaders();
+        // Remove Content-Type to let browser set it with boundary for FormData
+        // @ts-ignore
+        delete headers['Content-Type'];
+
+        const response = await fetch(`${BASE_URL}/members/import`, {
+            method: 'POST',
+            headers: headers,
+            body: formData,
+        });
+
+        if (!response.ok) {
+            throw new Error(`API Error: ${response.statusText}`);
+        }
+    }
+
     async updateMember(id: string, member: Member): Promise<Member> {
         return this.request<Member>(`/members/${id}`, {
             method: 'PUT',
