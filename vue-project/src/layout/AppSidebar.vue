@@ -2,8 +2,10 @@
 import { ref } from "vue";
 import Menu from 'primevue/menu';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores/auth';
 
 const router = useRouter();
+const authStore = useAuthStore();
 
 const items = ref([
     { label: 'Home', icon: 'pi pi-home', command: () => router.push('/') },
@@ -18,7 +20,16 @@ const items = ref([
         ]
     },
     { label: 'Calendar', icon: 'pi pi-calendar', command: () => router.push('/calendar') },
-    { label: 'Documents', icon: 'pi pi-file', command: () => router.push('/documents') }
+    { label: 'Documents', icon: 'pi pi-file', command: () => router.push('/documents') },
+    { separator: true },
+    { 
+        label: 'Logout', 
+        icon: 'pi pi-sign-out', 
+        command: () => {
+            authStore.logout();
+            router.push('/login');
+        } 
+    }
 ]);
 </script>
 
