@@ -96,6 +96,12 @@ class ApiClient {
         });
     }
 
+    async getMember(id: string): Promise<Member> {
+        return this.request<Member>(`/members/${id}`, {
+            headers: this.getHeaders(),
+        });
+    }
+
     async createMember(member: Member): Promise<Member> {
         return this.request<Member>('/members', {
             method: 'POST',

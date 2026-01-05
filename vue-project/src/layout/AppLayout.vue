@@ -5,7 +5,7 @@ import { RouterView } from 'vue-router';
 
 <template>
     <div class="flex min-h-screen bg-gray-50">
-        <aside class="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col">
+        <aside class="w-64 bg-white border-r border-gray-200 flex flex-col">
             <div class="p-6 font-bold text-2xl text-emerald-600">Alex Club</div>
             <div class="flex-1 overflow-y-auto">
                 <AppSidebar />
