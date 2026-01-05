@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import AppLayout from '../layout/AppLayout.vue'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
+import RegisterView from '../views/RegisterView.vue'
 import PlaceholderView from '../views/PlaceholderView.vue'
 import MemberListView from '../views/members/MemberListView.vue'
 import MemberForm from '../views/members/MemberForm.vue'
@@ -14,6 +15,12 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: LoginView,
+      meta: { public: true }
+    },
+    {
+      path: '/register',
+      name: 'register',
+      component: RegisterView,
       meta: { public: true }
     },
     {

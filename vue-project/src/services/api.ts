@@ -1,5 +1,6 @@
 import type {
     LoginRequest,
+    RegisterRequest,
     LoginResponse,
     Club,
     Member,
@@ -57,6 +58,14 @@ class ApiClient {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(credentials),
+        });
+    }
+
+    async register(data: RegisterRequest): Promise<LoginResponse> {
+        return this.request<LoginResponse>('/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
         });
     }
 
