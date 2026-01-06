@@ -12,15 +12,15 @@ const items = computed(() => {
         { label: 'Home', icon: 'pi pi-home', command: () => router.push('/') },
     ];
 
-    if (authStore.hasPermission('members:read')) {
+    if (authStore.hasPermission('members:read') || authStore.hasPermission('members:write')) {
         menuItems.push({ label: 'Members', icon: 'pi pi-users', command: () => router.push('/members') });
     }
 
-    if (authStore.hasPermission('departments:read')) {
+    if (authStore.hasPermission('departments:read') || authStore.hasPermission('departments:write')) {
         menuItems.push({ label: 'Departments', icon: 'pi pi-sitemap', command: () => router.push('/departments') });
     }
 
-    if (authStore.hasPermission('finance:read')) {
+    if (authStore.hasPermission('finance:read') || authStore.hasPermission('finance:write')) {
         menuItems.push({
             label: 'Finance',
             icon: 'pi pi-dollar',
@@ -31,11 +31,11 @@ const items = computed(() => {
         } as any); // Type assertion for nested items if needed, or structured correctly
     }
 
-    if (authStore.hasPermission('calendar:read')) {
+    if (authStore.hasPermission('calendar:read') || authStore.hasPermission('calendar:write')) {
         menuItems.push({ label: 'Calendar', icon: 'pi pi-calendar', command: () => router.push('/calendar') });
     }
 
-    if (authStore.hasPermission('documents:read')) {
+    if (authStore.hasPermission('documents:read') || authStore.hasPermission('documents:write')) {
         menuItems.push({ label: 'Documents', icon: 'pi pi-file', command: () => router.push('/documents') });
     }
 

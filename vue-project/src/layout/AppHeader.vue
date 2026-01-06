@@ -55,8 +55,8 @@ const toggle = (event: Event) => {
             
             <div class="flex items-center gap-3 cursor-pointer p-1 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu">
                 <div class="text-right hidden sm:block">
-                    <div class="text-sm font-medium text-surface-900 dark:text-surface-0">Admin User</div>
-                    <div class="text-xs text-surface-500 dark:text-surface-400">Administrator</div>
+                    <div class="text-sm font-medium text-surface-900 dark:text-surface-0">{{ authStore.userName || 'User' }}</div>
+                    <div class="text-xs text-surface-500 dark:text-surface-400">{{ authStore.userRoleLabel || 'Member' }}</div>
                 </div>
                 <Avatar icon="pi pi-user" class="bg-primary-100 text-primary-600" shape="circle" />
             </div>
