@@ -7,6 +7,7 @@ import PlaceholderView from '../views/PlaceholderView.vue'
 import MemberListView from '../views/members/MemberListView.vue'
 import MemberForm from '../views/members/MemberForm.vue'
 import MemberImportView from '../views/members/MemberImportView.vue'
+import UserManagementView from '../views/admin/UserManagementView.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({
@@ -37,47 +38,62 @@ const router = createRouter({
           path: 'members',
           name: 'members',
           component: MemberListView,
+          meta: { permission: 'members:read' }
         },
         {
           path: 'members/create',
           name: 'members-create',
           component: MemberForm,
+          meta: { permission: 'members:write' }
         },
         {
           path: 'members/import',
           name: 'members-import',
           component: MemberImportView,
+          meta: { permission: 'members:write' }
         },
         {
           path: 'members/:id/edit',
           name: 'members-edit',
           component: MemberForm,
+          meta: { permission: 'members:write' }
         },
         {
           path: 'departments',
           name: 'departments',
           component: PlaceholderView,
+          meta: { permission: 'departments:read' }
         },
         {
           path: 'finance/receipts',
           name: 'receipts',
           component: PlaceholderView,
+          meta: { permission: 'finance:read' }
         },
         {
           path: 'finance/accounts',
           name: 'accounts',
           component: PlaceholderView,
+          meta: { permission: 'finance:read' }
         },
         {
           path: 'calendar',
           name: 'calendar',
           component: PlaceholderView,
+          meta: { permission: 'calendar:read' }
         },
         {
           path: 'documents',
           name: 'documents',
           component: PlaceholderView,
+          meta: { permission: 'documents:read' }
         },
+        {
+            path: 'admin/users',
+            name: 'admin-users',
+            component: UserManagementView,
+            meta: { permission: 'users:manage' } // Assuming this permission exists or needs to be added to RBAC
+        }
       ]
     },
   ],
@@ -86,12 +102,20 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
   const isPublic = to.matched.some(record => record.meta.public);
+  const requiredPermission = to.meta.permission as string | undefined;
 
   if (!isPublic && !authStore.isAuthenticated) {
     return next({ name: 'login' });
   }
 
   if (to.name === 'login' && authStore.isAuthenticated) {
+    return next({ name: 'home' });
+  }
+
+  if (requiredPermission && !authStore.hasPermission(requiredPermission)) {
+    // If user doesn't have permission, redirect to home or show unauthorized
+    // ideally, home if accessible, or maybe stay on current page
+    console.warn(`User missing permission: ${requiredPermission}`);
     return next({ name: 'home' });
   }
 

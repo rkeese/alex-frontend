@@ -98,6 +98,29 @@ class ApiClient {
         });
     }
 
+    // User Management / Admin
+    // Note: 'getUsers' isn't explicitly in the provided API doc snippet, 
+    // but essential for an admin view. Assuming endpoint /users exists or is needed.
+    async getUsers(): Promise<import('../types').User[]> {
+        return this.request<import('../types').User[]>('/users', {
+            headers: this.getHeaders(true),
+        });
+    }
+
+    async getRoles(): Promise<import('../types').Role[]> {
+        return this.request<import('../types').Role[]>('/roles', {
+            headers: this.getHeaders(true),
+        });
+    }
+
+    async assignRole(data: import('../types').AssignRoleRequest): Promise<void> {
+        return this.request<void>('/users/roles', {
+            method: 'POST',
+            headers: this.getHeaders(true),
+            body: JSON.stringify(data),
+        });
+    }
+
     // Members
     async getMembers(): Promise<Member[]> {
         return this.request<Member[]>('/members', {

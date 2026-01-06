@@ -7,10 +7,12 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
 import Tag from 'primevue/tag';
+import { useAuthStore } from '@/stores/auth';
 
 const members = ref<Member[]>([]);
 const loading = ref(true);
 const router = useRouter();
+const authStore = useAuthStore();
 
 onMounted(async () => {
     loadMembers();
@@ -63,8 +65,8 @@ const deleteMember = async (id: string) => {
         <div class="flex justify-between items-center mb-4">
             <h1 class="text-2xl font-bold text-gray-800">Members</h1>
             <div class="flex gap-2">
-                <Button label="Import" icon="pi pi-upload" severity="secondary" @click="router.push('/members/import')" />
-                <Button label="New Member" icon="pi pi-plus" @click="router.push('/members/create')" />
+                <Button v-if="authStore.hasPermission('members:write')" label="Import" icon="pi pi-upload" severity="secondary" @click="router.push('/members/import')" />
+                <Button v-if="authStore.hasPermission('members:write')" label="New Member" icon="pi pi-plus" @click="router.push('/members/create')" />
             </div>
         </div>
 
@@ -84,9 +86,9 @@ const deleteMember = async (id: string) => {
             <Column header="Actions" style="width: 15%">
                 <template #body="slotProps">
                     <div class="flex gap-2">
-                        <Button icon="pi pi-pencil" severity="info" text rounded aria-label="Edit"
+                        <Button v-if="authStore.hasPermission('members:write')" icon="pi pi-pencil" severity="info" text rounded aria-label="Edit"
                             @click="editMember(slotProps.data.id)" />
-                        <Button icon="pi pi-trash" severity="danger" text rounded aria-label="Delete"
+                        <Button v-if="authStore.hasPermission('members:delete')" icon="pi pi-trash" severity="danger" text rounded aria-label="Delete"
                             @click="deleteMember(slotProps.data.id)" />
                     </div>
                 </template>

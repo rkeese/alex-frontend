@@ -98,3 +98,23 @@ export interface Document {
     name?: string; // Assuming name is returned
     // Add other fields if known, otherwise generic
 }
+
+export interface User {
+    id: string;
+    email: string;
+    first_name?: string;
+    last_name?: string;
+    roles?: string[]; // Simplified role list
+}
+
+export interface Role {
+    id: string;
+    name: string;
+    created_at?: string;
+}
+
+export interface AssignRoleRequest {
+    user_id: string;
+    role_name: string;
+    club_id?: string;
+}
