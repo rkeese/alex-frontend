@@ -39,7 +39,22 @@ class ApiClient {
     private async request<T>(url: string, options: RequestInit = {}): Promise<T> {
         const response = await fetch(`${BASE_URL}${url}`, options);
         if (!response.ok) {
-            throw new Error(`API Error: ${response.statusText}`);
+            let errorMsg = response.statusText;
+            try {
+                const text = await response.text();
+                // Try parsing JSON error response
+                try {
+                    const json = JSON.parse(text);
+                    if (json.error) errorMsg = json.error;
+                    else if (json.message) errorMsg = json.message;
+                    else errorMsg = text;
+                } catch {
+                    if (text) errorMsg = text;
+                }
+            } catch (e) {
+                // ignore parsing error
+            }
+            throw new Error(`${errorMsg} (${response.status})`);
         }
         if (response.status === 204) {
             return {} as T;
@@ -101,9 +116,15 @@ class ApiClient {
     // User Management / Admin
     // Note: 'getUsers' isn't explicitly in the provided API doc snippet, 
     // but essential for an admin view. Assuming endpoint /users exists or is needed.
-    async getUsers(): Promise<import('../types').User[]> {
+    async getUsers(includeClubHeader: boolean = false): Promise<import('../types').User[]> {
         return this.request<import('../types').User[]>('/users', {
-            headers: this.getHeaders(false),
+            headers: this.getHeaders(includeClubHeader),
+        });
+    }
+
+    async getUser(id: string, includeClubHeader: boolean = true): Promise<import('../types').User> {
+        return this.request<import('../types').User>(`/users/${id}`, {
+            headers: this.getHeaders(includeClubHeader),
         });
     }
 
@@ -114,12 +135,40 @@ class ApiClient {
         });
     }
 
+    async getUserRoles(userId: string): Promise<any[]> {
+        // Hypothethical endpoint based on REST best practices if main user object doesn't have it
+        return this.request<any[]>(`/users/${userId}/roles`, {
+             headers: this.getHeaders(true),
+        });
+    }
+
     async assignRole(data: import('../types').AssignRoleRequest): Promise<void> {
         return this.request<void>('/users/roles', {
             method: 'POST',
             // Assigning role is a system action, though it links to a club via body
             headers: this.getHeaders(false),
             body: JSON.stringify(data),
+        });
+    }
+
+    async removeRole(data: import('../types').AssignRoleRequest): Promise<void> {
+        // Use query parameters for DELETE
+        const params = new URLSearchParams();
+        params.append('user_id', data.user_id);
+        params.append('role_name', data.role_name);
+        if (data.club_id) {
+            params.append('club_id', data.club_id);
+        }
+
+        const headers = this.getHeaders(false);
+        // DELETE with no body should not have Content-Type: application/json
+        // otherwise some backends try to parse empty body and fail (EOF / 500)
+        // @ts-ignore
+        delete headers['Content-Type'];
+
+        return this.request<void>(`/users/roles?${params.toString()}`, {
+            method: 'DELETE',
+            headers: headers,
         });
     }
 

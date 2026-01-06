@@ -104,7 +104,7 @@ export interface User {
     email: string;
     first_name?: string;
     last_name?: string;
-    roles?: string[]; // Simplified role list
+    roles?: (string | { name?: string; role?: string; club_id?: string })[];
 }
 
 export interface Role {
