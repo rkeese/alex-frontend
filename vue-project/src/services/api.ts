@@ -103,20 +103,22 @@ class ApiClient {
     // but essential for an admin view. Assuming endpoint /users exists or is needed.
     async getUsers(): Promise<import('../types').User[]> {
         return this.request<import('../types').User[]>('/users', {
-            headers: this.getHeaders(true),
+            headers: this.getHeaders(false),
         });
     }
 
     async getRoles(): Promise<import('../types').Role[]> {
         return this.request<import('../types').Role[]>('/roles', {
-            headers: this.getHeaders(true),
+            // Roles are global definitions
+            headers: this.getHeaders(false),
         });
     }
 
     async assignRole(data: import('../types').AssignRoleRequest): Promise<void> {
         return this.request<void>('/users/roles', {
             method: 'POST',
-            headers: this.getHeaders(true),
+            // Assigning role is a system action, though it links to a club via body
+            headers: this.getHeaders(false),
             body: JSON.stringify(data),
         });
     }

@@ -7,27 +7,74 @@ export const useAuthStore = defineStore('auth', () => {
     const token = ref(localStorage.getItem('token') || '');
     const clubId = ref(localStorage.getItem('clubId') || '');
     const permissions = ref<Set<string>>(new Set());
+    const roles = ref<Set<string>>(new Set());
+    const userEmail = ref<string>('');
     
     const isAuthenticated = computed(() => !!token.value);
 
-    // Initialize permissions from stored token
+    // Initialize state from stored token
     if (token.value) {
+        processToken(token.value);
+    }
+
+    function processToken(jwt: string) {
         try {
-            const payload = parseJwt(token.value);
+            const payload = parseJwt(jwt);
+            console.log('JWT Payload:', payload); // Debugging aid
+            
+            // Extract email/sub
+            userEmail.value = payload.email || payload.sub || '';
+
+            // Extract permissions
             if (payload.permissions && Array.isArray(payload.permissions)) {
                 permissions.value = new Set(payload.permissions);
+            } else {
+                permissions.value.clear();
             }
+
+            // Extract roles - try common claim names and handle both string and array formats
+            let rolesList: string[] = [];
+            if (Array.isArray(payload.roles)) {
+                rolesList = payload.roles;
+            } else if (payload.realm_access && Array.isArray(payload.realm_access.roles)) {
+                rolesList = payload.realm_access.roles;
+            } else if (typeof payload.role === 'string') {
+                rolesList = [payload.role];
+            }
+
+            roles.value = new Set(rolesList);
+            
         } catch (e) {
-            console.error('Failed to parse token on init', e);
+            console.error('Failed to parse token', e);
+            permissions.value.clear();
+            roles.value.clear();
+            userEmail.value = '';
         }
     }
 
     function hasPermission(permission: string): boolean {
-        // If user is admin/superuser, they might have all permissions. 
-        // We accept wildcard like 'members:*' or just check if specific permission exists.
-        // Based on concept, permissions are explicit 'area:action'.
-        // Assuming 'admin' role might provide a '*' permission or we check a role claim separately.
-        // For now, check exact match.
+        // Hardcoded Superuser for dev/testing or specific admin account
+        if (userEmail.value === 'admin@example.com') {
+            return true;
+        }
+
+        // Superuser / Admin bypass (case insensitive check)
+        const lowerRoles = Array.from(roles.value).map(r => r.toLowerCase());
+        if (lowerRoles.includes('superuser') || lowerRoles.includes('admin') || lowerRoles.includes('administrator')) {
+            return true;
+        }
+        
+        // Wildcard permission check
+        if (permissions.value.has('*')) {
+            return true;
+        }
+
+        // Specific area wildcard check (e.g. 'members:*' allows 'members:read')
+        const area = permission.split(':')[0];
+        if (permissions.value.has(`${area}:*`)) {
+            return true;
+        }
+
         return permissions.value.has(permission);
     }
 
@@ -37,15 +84,7 @@ export const useAuthStore = defineStore('auth', () => {
             token.value = response.token;
             localStorage.setItem('token', response.token);
             
-            // Parse token for permissions
-            try {
-                const payload = parseJwt(response.token);
-                if (payload.permissions && Array.isArray(payload.permissions)) {
-                    permissions.value = new Set(payload.permissions);
-                }
-            } catch (e) {
-                console.error('Failed to parse token', e);
-            }
+            processToken(response.token);
 
             // Fetch clubs and set default
             try {
@@ -70,15 +109,7 @@ export const useAuthStore = defineStore('auth', () => {
             const response = await api.register(data);
             token.value = response.token;
             localStorage.setItem('token', response.token);
-             // Parse token for permissions
-             try {
-                const payload = parseJwt(response.token);
-                if (payload.permissions && Array.isArray(payload.permissions)) {
-                    permissions.value = new Set(payload.permissions);
-                }
-            } catch (e) {
-                console.error('Failed to parse token', e);
-            }
+            processToken(response.token);
             return true;
         } catch (error) {
             console.error('Registration failed', error);
@@ -90,11 +121,12 @@ export const useAuthStore = defineStore('auth', () => {
         token.value = '';
         clubId.value = '';
         permissions.value.clear();
+        roles.value.clear();
         localStorage.removeItem('token');
         localStorage.removeItem('clubId');
     }
 
-    return { token, clubId, isAuthenticated, permissions, hasPermission, login, register, logout };
+    return { token, clubId, isAuthenticated, permissions, roles, hasPermission, login, register, logout };
 });
 
 function parseJwt (token: string) {

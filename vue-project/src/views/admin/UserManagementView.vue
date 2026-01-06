@@ -14,12 +14,14 @@ const authStore = useAuthStore();
 const users = ref<User[]>([]);
 const roles = ref<Role[]>([]);
 const loading = ref(true);
+const error = ref<string | null>(null);
 const dialogVisible = ref(false);
 const selectedUser = ref<User | null>(null);
 const selectedRole = ref<Role | null>(null);
 
 const loadData = async () => {
     loading.value = true;
+    error.value = null;
     try {
         const [usersData, rolesData] = await Promise.all([
             api.getUsers(),
@@ -27,8 +29,9 @@ const loadData = async () => {
         ]);
         users.value = usersData;
         roles.value = rolesData;
-    } catch (error) {
-        console.error('Failed to load admin data', error);
+    } catch (e: any) {
+        console.error('Failed to load admin data', e);
+        error.value = e.message || 'Failed to load data';
     } finally {
         loading.value = false;
     }
@@ -44,20 +47,30 @@ const openAssignRoleDialog = (user: User) => {
     dialogVisible.value = true;
 };
 
+const openManualAssign = () => {
+    selectedUser.value = null;
+    selectedRole.value = null;
+    dialogVisible.value = true;
+};
+
+const manualUserId = ref('');
+
 const assignRole = async () => {
-    if (!selectedUser.value || !selectedRole.value || !authStore.clubId) return;
+    if ((!selectedUser.value && !manualUserId.value) || !selectedRole.value || !authStore.clubId) return;
 
     try {
         await api.assignRole({
-            user_id: selectedUser.value.id,
+            user_id: selectedUser.value ? selectedUser.value.id : manualUserId.value,
             role_name: selectedRole.value.name,
             club_id: authStore.clubId
         });
         dialogVisible.value = false;
+        manualUserId.value = '';
         // Refresh users to see updated roles if the backend returns them
         await loadData(); 
     } catch (error) {
         console.error('Failed to assign role', error);
+        alert('Failed to assign role');
     }
 };
 </script>
@@ -66,6 +79,15 @@ const assignRole = async () => {
     <div class="card">
         <h1 class="text-2xl font-bold text-gray-800 mb-4">User Management</h1>
         
+        <div class="flex justify-end mb-4">
+             <Button label="Manually Assign Role (By User ID)" icon="pi pi-user-plus" severity="secondary" @click="openManualAssign" />
+        </div>
+
+        <div v-if="error" class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <strong class="font-bold">Notice:</strong>
+            <span class="block sm:inline"> Could not fetch user list directly ({{ error }}). You can still assign roles manually if you know the User ID.</span>
+        </div>
+
         <DataTable :value="users" :loading="loading" stripedRows class="p-datatable-sm">
              <template #empty> No users found. </template>
             <Column field="email" header="Email" sortable></Column>
@@ -93,13 +115,18 @@ const assignRole = async () => {
                 <div v-if="selectedUser">
                     <p class="font-semibold">User: {{ selectedUser.email }}</p>
                 </div>
+                <div v-else>
+                     <label for="manual_user_id" class="block mb-1">User UUID</label>
+                     <input id="manual_user_id" v-model="manualUserId" class="w-full p-2 border rounded" placeholder="e.g. 550e8400-e29b-..." />
+                     <p class="text-xs text-gray-500 mt-1">Enter the UUID of the user from the database.</p>
+                </div>
                 <div class="flex flex-col gap-2">
                     <label for="role">Select Role</label>
                      <Dropdown v-model="selectedRole" :options="roles" optionLabel="name" placeholder="Select a Role" class="w-full" />
                 </div>
                 <div class="flex justify-end gap-2 mt-4">
                     <Button label="Cancel" text severity="secondary" @click="dialogVisible = false" />
-                    <Button label="Save" @click="assignRole" :disabled="!selectedRole" />
+                    <Button label="Save" @click="assignRole" :disabled="!selectedRole || (!selectedUser && !manualUserId)" />
                 </div>
             </div>
         </Dialog>
