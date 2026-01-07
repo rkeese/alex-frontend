@@ -99,6 +99,11 @@ export interface Document {
     // Add other fields if known, otherwise generic
 }
 
+export interface ImportResponse {
+    success_count: number;
+    errors: string[];
+}
+
 export interface User {
     id: string;
     email: string;

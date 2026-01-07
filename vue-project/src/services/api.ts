@@ -10,7 +10,8 @@ import type {
     BankAccount,
     SepaXmlRequest,
     CalendarEvent,
-    Document
+    Document,
+    ImportResponse
 } from '../types';
 
 const BASE_URL = '/api/v1';
@@ -193,7 +194,7 @@ class ApiClient {
         });
     }
 
-    async importMembers(file: File): Promise<void> {
+    async importMembers(file: File): Promise<ImportResponse> {
         const formData = new FormData();
         formData.append('file', file);
 
@@ -209,8 +210,25 @@ class ApiClient {
         });
 
         if (!response.ok) {
-            throw new Error(`API Error: ${response.statusText}`);
+            let errorMsg = response.statusText;
+            try {
+                const text = await response.text();
+                // Try parsing JSON error response
+                try {
+                    const json = JSON.parse(text);
+                    if (json.error) errorMsg = json.error;
+                    else if (json.message) errorMsg = json.message;
+                    else errorMsg = text;
+                } catch {
+                    if (text) errorMsg = text;
+                }
+            } catch (e) {
+                // ignore parsing error
+            }
+            throw new Error(`API Error: ${errorMsg}`);
         }
+
+        return await response.json();
     }
 
     async updateMember(id: string, member: Member): Promise<Member> {
