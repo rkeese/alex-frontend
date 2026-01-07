@@ -194,6 +194,21 @@ class ApiClient {
         });
     }
 
+    async updateMember(id: string, member: Member): Promise<Member> {
+        return this.request<Member>(`/members/${id}`, {
+            method: 'PUT',
+            headers: this.getHeaders(),
+            body: JSON.stringify(member),
+        });
+    }
+
+    async deleteMember(id: string): Promise<void> {
+        return this.request<void>(`/members/${id}`, {
+            method: 'DELETE',
+            headers: this.getHeaders(),
+        });
+    }
+
     async importMembers(file: File): Promise<ImportResponse> {
         const formData = new FormData();
         formData.append('file', file);

@@ -40,10 +40,35 @@ export interface Member {
     honorary: boolean;
     status: string;
     salutation: string;
-    letter_salutation: string;
-    phone1: string;
+    letter_salutation: string; // Briefanrede
+    title: string;
+    phone1: string; // Telefon
+    phone2: string; // Mobil
     email: string;
     joined_at: string; // YYYY-MM-DD
+    left_at: string; // Mitglied bis
+
+    country: string;
+    marital_status: string;
+    notes: string;
+
+    // Contribution / Role info in CSV
+    contribution_name: string;
+    contribution_type: string;
+    contribution_amount: string; // decimal string
+    contribution_period: string; 
+    contribution_due_date: string;
+
+    // Payment / SEPA
+    payment_method: string;
+    iban: string;
+    account_holder: string;
+    sepa_mandate_granted: string; // "Ja", "Nein", "Einzug", or date
+    mandate_reference: string;
+    mandate_type: string;
+    next_debit_type: string;
+    mandate_granted_at: string;
+    last_usage_at: string;
 }
 
 export interface Department {
