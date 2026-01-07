@@ -198,12 +198,19 @@ class ApiClient {
         const formData = new FormData();
         formData.append('file', file);
 
-        const headers = this.getHeaders();
+        // API documentation implies only Authorization header is needed (matching the curl command)
+        // Pass false to getHeaders to exclude X-Club-ID, using query param instead as suggested by backend
+        const headers = this.getHeaders(false);
         // Remove Content-Type to let browser set it with boundary for FormData
         // @ts-ignore
         delete headers['Content-Type'];
 
-        const response = await fetch(`${BASE_URL}/members/import`, {
+        const clubId = localStorage.getItem('clubId');
+        const url = clubId 
+            ? `${BASE_URL}/members/import?club_id=${clubId}`
+            : `${BASE_URL}/members/import`;
+
+        const response = await fetch(url, {
             method: 'POST',
             headers: headers,
             body: formData,
@@ -213,6 +220,13 @@ class ApiClient {
             let errorMsg = response.statusText;
             try {
                 const text = await response.text();
+                // Log the full error for debugging purposes
+                console.error('Import Request Failed:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    body: text
+                });
+
                 // Try parsing JSON error response
                 try {
                     const json = JSON.parse(text);
@@ -223,7 +237,7 @@ class ApiClient {
                     if (text) errorMsg = text;
                 }
             } catch (e) {
-                // ignore parsing error
+                console.error('Failed to read error response body:', e);
             }
             throw new Error(`API Error: ${errorMsg}`);
         }

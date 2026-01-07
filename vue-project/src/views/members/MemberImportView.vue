@@ -48,6 +48,7 @@ const onUpload = async (event: any) => {
             }, 1000);
         }
     } catch (e: any) {
+        console.error('Import error:', e);
         error.value = 'Import failed: ' + (e.message || 'Unknown error');
         toast.add({ severity: 'error', summary: 'Error', detail: error.value, life: 5000 });
     } finally {
