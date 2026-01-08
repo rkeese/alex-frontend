@@ -31,13 +31,19 @@ const loadMembers = async () => {
 };
 
 const getSeverity = (status: string) => {
-    switch (status.toLowerCase()) {
+    if (!status) return 'contrast';
+    const s = status.toLowerCase();
+    switch (s) {
         case 'active':
+        case 'aktiv':
             return 'success';
         case 'inactive':
+        case 'inaktiv':
         case 'passive':
+        case 'passiv':
             return 'secondary';
         case 'honorary':
+        case 'ehrenmitglied':
             return 'info';
         default:
             return 'contrast';
@@ -63,32 +69,32 @@ const deleteMember = async (id: string) => {
 <template>
     <div class="card">
         <div class="flex justify-between items-center mb-4">
-            <h1 class="text-2xl font-bold text-gray-800">Members</h1>
+            <h1 class="text-2xl font-bold text-gray-800">Mitglieder</h1>
             <div class="flex gap-2">
-                <Button v-if="authStore.hasPermission('members:write')" label="Import" icon="pi pi-upload" severity="secondary" @click="router.push('/members/import')" />
-                <Button v-if="authStore.hasPermission('members:write')" label="New Member" icon="pi pi-plus" @click="router.push('/members/create')" />
+                <Button v-if="authStore.hasPermission('members:write')" label="Importieren" icon="pi pi-upload" severity="secondary" @click="router.push('/members/import')" />
+                <Button v-if="authStore.hasPermission('members:write')" label="Neues Mitglied" icon="pi pi-plus" @click="router.push('/members/create')" />
             </div>
         </div>
 
         <DataTable :value="members" :loading="loading" paginator :rows="10" :rowsPerPageOptions="[5, 10, 20, 50]"
             tableStyle="min-width: 50rem" stripedRows class="p-datatable-sm">
-            <template #empty> No members found. </template>
-            <Column field="member_number" header="No." sortable style="width: 10%"></Column>
-            <Column field="first_name" header="First Name" sortable style="width: 15%"></Column>
-            <Column field="last_name" header="Last Name" sortable style="width: 15%"></Column>
-            <Column field="email" header="Email" sortable style="width: 20%"></Column>
-            <Column field="city" header="City" sortable style="width: 15%"></Column>
+            <template #empty> Keine Mitglieder gefunden. </template>
+            <Column field="member_number" header="Nr." sortable style="width: 10%"></Column>
+            <Column field="first_name" header="Vorname" sortable style="width: 15%"></Column>
+            <Column field="last_name" header="Nachname" sortable style="width: 15%"></Column>
+            <Column field="email" header="E-Mail" sortable style="width: 20%"></Column>
+            <Column field="city" header="Stadt" sortable style="width: 15%"></Column>
             <Column field="status" header="Status" sortable style="width: 10%">
                 <template #body="slotProps">
                     <Tag :value="slotProps.data.status" :severity="getSeverity(slotProps.data.status)" />
                 </template>
             </Column>
-            <Column header="Actions" style="width: 15%">
+            <Column header="Aktionen" style="width: 15%">
                 <template #body="slotProps">
                     <div class="flex gap-2">
-                        <Button v-if="authStore.hasPermission('members:write')" icon="pi pi-pencil" severity="info" text rounded aria-label="Edit"
+                        <Button v-if="authStore.hasPermission('members:write')" icon="pi pi-pencil" severity="info" text rounded aria-label="Bearbeiten"
                             @click="editMember(slotProps.data.id)" />
-                        <Button v-if="authStore.hasPermission('members:delete')" icon="pi pi-trash" severity="danger" text rounded aria-label="Delete"
+                        <Button v-if="authStore.hasPermission('members:delete')" icon="pi pi-trash" severity="danger" text rounded aria-label="Löschen"
                             @click="deleteMember(slotProps.data.id)" />
                     </div>
                 </template>

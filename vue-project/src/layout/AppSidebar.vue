@@ -9,39 +9,39 @@ const authStore = useAuthStore();
 
 const items = computed(() => {
     const menuItems = [
-        { label: 'Home', icon: 'pi pi-home', command: () => router.push('/') },
+        { label: 'Startseite', icon: 'pi pi-home', command: () => router.push('/') },
     ];
 
     if (authStore.hasPermission('members:read') || authStore.hasPermission('members:write')) {
-        menuItems.push({ label: 'Members', icon: 'pi pi-users', command: () => router.push('/members') });
+        menuItems.push({ label: 'Mitglieder', icon: 'pi pi-users', command: () => router.push('/members') });
     }
 
     if (authStore.hasPermission('departments:read') || authStore.hasPermission('departments:write')) {
-        menuItems.push({ label: 'Departments', icon: 'pi pi-sitemap', command: () => router.push('/departments') });
+        menuItems.push({ label: 'Abteilungen', icon: 'pi pi-sitemap', command: () => router.push('/departments') });
     }
 
     if (authStore.hasPermission('finance:read') || authStore.hasPermission('finance:write')) {
         menuItems.push({
-            label: 'Finance',
+            label: 'Finanzen',
             icon: 'pi pi-dollar',
             items: [
-                { label: 'Receipts', icon: 'pi pi-receipt', command: () => router.push('/finance/receipts') },
-                { label: 'Accounts', icon: 'pi pi-wallet', command: () => router.push('/finance/accounts') }
+                { label: 'Belege', icon: 'pi pi-receipt', command: () => router.push('/finance/receipts') },
+                { label: 'Konten', icon: 'pi pi-wallet', command: () => router.push('/finance/accounts') }
             ]
         } as any); // Type assertion for nested items if needed, or structured correctly
     }
 
     if (authStore.hasPermission('calendar:read') || authStore.hasPermission('calendar:write')) {
-        menuItems.push({ label: 'Calendar', icon: 'pi pi-calendar', command: () => router.push('/calendar') });
+        menuItems.push({ label: 'Kalender', icon: 'pi pi-calendar', command: () => router.push('/calendar') });
     }
 
     if (authStore.hasPermission('documents:read') || authStore.hasPermission('documents:write')) {
-        menuItems.push({ label: 'Documents', icon: 'pi pi-file', command: () => router.push('/documents') });
+        menuItems.push({ label: 'Dokumente', icon: 'pi pi-file', command: () => router.push('/documents') });
     }
 
     if (authStore.hasPermission('users:manage')) {
-        menuItems.push({ label: 'Admin', icon: 'pi pi-cog', items: [
-            { label: 'User Management', icon: 'pi pi-users', command: () => router.push('/admin/users') }
+        menuItems.push({ label: 'Verwaltung', icon: 'pi pi-cog', items: [
+            { label: 'Benutzerverwaltung', icon: 'pi pi-users', command: () => router.push('/admin/users') }
         ] } as any);
     }
 

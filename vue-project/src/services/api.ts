@@ -260,21 +260,6 @@ class ApiClient {
         return await response.json();
     }
 
-    async updateMember(id: string, member: Member): Promise<Member> {
-        return this.request<Member>(`/members/${id}`, {
-            method: 'PUT',
-            headers: this.getHeaders(),
-            body: JSON.stringify(member),
-        });
-    }
-
-    async deleteMember(id: string): Promise<void> {
-        return this.request<void>(`/members/${id}`, {
-            method: 'DELETE',
-            headers: this.getHeaders(),
-        });
-    }
-
     // Departments
     async getDepartments(): Promise<Department[]> {
         return this.request<Department[]>('/departments', {
