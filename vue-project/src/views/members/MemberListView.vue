@@ -50,12 +50,25 @@ const getSeverity = (status: string) => {
     }
 };
 
-const editMember = (id: string) => {
-    router.push(`/members/${id}/edit`);
+const getMemberId = (member: any): string => {
+    if (member.id) return member.id;
+    if (member.ID) return member.ID;
+    if (member.Id) return member.Id;
+    // Fallback if ID is inside an invalid structure or completely missing
+    console.error('Member ID missing or invalid casing:', member);
+    return '';
 };
 
-const deleteMember = async (id: string) => {
-    if (confirm('Are you sure you want to delete this member?')) {
+const editMember = (member: any) => {
+    const id = getMemberId(member);
+    if (id) {
+        router.push(`/members/${id}/edit`);
+    }
+};
+
+const deleteMember = async (member: any) => {
+    const id = getMemberId(member);
+    if (id && confirm('Sind Sie sicher, dass Sie dieses Mitglied löschen möchten?')) {
         try {
             await api.deleteMember(id);
             await loadMembers();
@@ -93,9 +106,9 @@ const deleteMember = async (id: string) => {
                 <template #body="slotProps">
                     <div class="flex gap-2">
                         <Button v-if="authStore.hasPermission('members:write')" icon="pi pi-pencil" severity="info" text rounded aria-label="Bearbeiten"
-                            @click="editMember(slotProps.data.id)" />
+                            @click="editMember(slotProps.data)" />
                         <Button v-if="authStore.hasPermission('members:delete')" icon="pi pi-trash" severity="danger" text rounded aria-label="Löschen"
-                            @click="deleteMember(slotProps.data.id)" />
+                            @click="deleteMember(slotProps.data)" />
                     </div>
                 </template>
             </Column>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { api } from '@/services/api';
 import type { Member } from '@/types';
@@ -13,7 +13,7 @@ import Panel from 'primevue/panel';
 
 const route = useRoute();
 const router = useRouter();
-const isEdit = route.params.id !== undefined;
+const isEdit = computed(() => route.params.id !== undefined && route.params.id !== '');
 const loading = ref(false);
 
 const member = ref<Member>({
@@ -92,77 +92,180 @@ const maritalStatusOptions = [
     { label: 'Verwitwet', value: 'widowed' }
 ];
 
-onMounted(async () => {
-    if (isEdit) {
+
+const loadMember = async () => {
+    if (isEdit.value) {
         loading.value = true;
         try {
-            const data: any = await api.getMember(route.params.id as string);
+            let data: any = await api.getMember(route.params.id as string);
             
-            // Map backend fields to frontend interface
-            const mappedMember: Partial<Member> = {
-                ...data,
-                // Map fields that might differ in naming between backend and frontend
-                honorary: data.honorary_member ?? data.honorary,
-                phone1: data.phone_number1 ?? data.phone1,
-                phone2: data.mobile_number ?? data.phone_number2 ?? data.phone2,
-                
-                iban: data.bank_account_iban ?? data.iban,
-                account_holder: data.bank_account_name_of_account_holder ?? data.account_holder,
-                sepa_mandate_granted: data.bank_account_sepa_mandate_available !== undefined 
-                    ? String(data.bank_account_sepa_mandate_available) 
-                    : data.sepa_mandate_granted,
-                mandate_reference: data.bank_account_mandate_reference ?? data.mandate_reference,
-                mandate_type: data.bank_account_mandate_type ?? data.mandate_type,
-                
-                contribution_name: data.fee_label ?? data.contribution_name,
-                contribution_type: data.fee_type ?? data.contribution_type,
-                contribution_amount: data.fee_amount !== undefined ? String(data.fee_amount) : data.contribution_amount,
-                contribution_period: data.fee_period ?? data.contribution_period,
-                contribution_due_date: formatDate(data.fee_maturity ?? data.contribution_due_date),
-                payment_method: data.fee_payment_method ?? data.payment_method,
-                
-                left_at: formatDate(data.member_until ?? data.left_at),
-                joined_at: formatDate(data.joined_at ?? data.entry_date ?? data.created_at),
-                birth_date: formatDate(data.birth_date),
-                
-                status: mapStatus(data.status),
-                gender: mapGender(data.gender)
+            // Handle potential response wrappers
+            if (data) {
+                if (data.data) { data = data.data; }
+                else if (data.member) { data = data.member; }
+                else if (Array.isArray(data) && data.length > 0) { data = data[0]; }
+            }
+            
+            // Helper to get value from search keys ignoring case or specific naming conventions
+            const getVal = (keys: string[]) => {
+                for (const key of keys) {
+                    if (data[key] !== undefined && data[key] !== null) return data[key];
+                    
+                    // Try PascalCase / TitleCase
+                    // e.g. "member_number" -> "MemberNumber", "city" -> "City"
+                    const pascal = key.split('_').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join('');
+                    if (data[pascal] !== undefined && data[pascal] !== null) return data[pascal];
+                    
+                    // Try camelCase
+                    // e.g. "member_number" -> "memberNumber", "First_Name" -> "firstName"
+                    const camel = pascal.charAt(0).toLowerCase() + pascal.slice(1);
+                    if (data[camel] !== undefined && data[camel] !== null) return data[camel];
+
+                    // Try lower case for single words e.g. "ID" -> "id"
+                    const lower = key.toLowerCase();
+                    if (data[lower] !== undefined && data[lower] !== null) return data[lower];
+                }
+                return undefined;
             };
 
+            // Enhanced mapping to handle snake_case (API spec) and PascalCase (Go default)
+            const mappedMember: Partial<Member> = {
+                member_number: getVal(['member_number', 'MemberNumber']),
+                first_name: getVal(['first_name', 'FirstName']),
+                last_name: getVal(['last_name', 'LastName']),
+                title: getVal(['title', 'Title']),
+                birth_date: formatDate(getVal(['birth_date', 'BirthDate'])),
+                
+                // Status & Gender need special storage to handle backend values (mapped later)
+                status: getVal(['status', 'Status']),
+                gender: getVal(['gender', 'Gender']),
+                salutation: getVal(['salutation', 'Salutation']),
+                marital_status: getVal(['marital_status', 'MaritalStatus']),
+
+                // Address
+                street_house_number: getVal(['street_house_number', 'StreetHouseNumber', 'address']),
+                postal_code: getVal(['postal_code', 'PostalCode', 'zip']),
+                city: getVal(['city', 'City']),
+                country: getVal(['country', 'Country']) || 'Deutschland',
+                email: getVal(['email', 'Email']),
+                phone1: getVal(['phone1', 'Phone1', 'phone_number1', 'PhoneNumber1']),
+                phone2: getVal(['phone2', 'Phone2', 'mobile_number', 'MobileNumber', 'phone_number2', 'PhoneNumber2']),
+                letter_salutation: getVal(['letter_salutation', 'LetterSalutation']),
+
+                // Membership
+                joined_at: formatDate(getVal(['joined_at', 'JoinedAt', 'entry_date', 'EntryDate', 'created_at', 'CreatedAt'])),
+                left_at: formatDate(getVal(['left_at', 'LeftAt', 'member_until', 'MemberUntil'])),
+                honorary: getVal(['honorary', 'Honorary', 'honorary_member', 'HonoraryMember']),
+
+                // Contribution
+                contribution_name: getVal(['contribution_name', 'ContributionName', 'fee_label', 'FeeLabel']),
+                contribution_type: getVal(['contribution_type', 'ContributionType', 'fee_type', 'FeeType']),
+                contribution_amount: getVal(['contribution_amount', 'ContributionAmount', 'fee_amount', 'FeeAmount'])?.toString(),
+                contribution_period: getVal(['contribution_period', 'ContributionPeriod', 'fee_period', 'FeePeriod']),
+                contribution_due_date: formatDate(getVal(['contribution_due_date', 'ContributionDueDate', 'fee_maturity', 'FeeMaturity'])),
+
+                // Payment
+                payment_method: getVal(['payment_method', 'PaymentMethod', 'fee_payment_method', 'FeePaymentMethod']),
+                iban: getVal(['iban', 'Iban', 'IBAN', 'bank_account_iban', 'BankAccountIban']),
+                account_holder: getVal(['account_holder', 'AccountHolder', 'bank_account_name_of_account_holder', 'BankAccountNameOfAccountHolder']),
+                sepa_mandate_granted: getVal(['sepa_mandate_granted', 'SepaMandateGranted', 'bank_account_sepa_mandate_available', 'BankAccountSepaMandateAvailable']),
+                mandate_reference: getVal(['mandate_reference', 'MandateReference', 'bank_account_mandate_reference', 'BankAccountMandateReference']),
+                mandate_granted_at: formatDate(getVal(['mandate_granted_at', 'MandateGrantedAt'])),
+                
+                notes: getVal(['notes', 'note', 'Note', 'Notes'])
+            };
+
+            // Apply mappings for enums
+            mappedMember.status = mapStatus(mappedMember.status);
+            mappedMember.gender = mapGender(mappedMember.gender);
+            mappedMember.salutation = mapSalutation(mappedMember.salutation);
+            mappedMember.marital_status = mapMaritalStatus(mappedMember.marital_status);
+            
+            // Map boolean/string SEPA status to "Ja"/"Nein" for UI
+            const sepaVal = mappedMember.sepa_mandate_granted;
+            if (sepaVal === true || sepaVal === 'true' || sepaVal === '1' || String(sepaVal).toLowerCase() === 'ja') {
+                mappedMember.sepa_mandate_granted = 'Ja';
+            } else if (sepaVal === false || sepaVal === 'false' || sepaVal === '0' || String(sepaVal).toLowerCase() === 'nein') {
+                mappedMember.sepa_mandate_granted = 'Nein';
+            } else {
+                 mappedMember.sepa_mandate_granted = sepaVal ? String(sepaVal) : '';
+            }
+
             // Merge loaded data with default structure to ensure all fields are reactive
-            member.value = { ...member.value, ...mappedMember };
+            // Filter out undefined values from mappedMember to avoid overwriting defaults with undefined
+            const cleanMapped = Object.fromEntries(
+                Object.entries(mappedMember).filter(([_, v]) => v !== undefined)
+            );
+
+            console.log('Mapped member data:', cleanMapped); // Debug log
+
+            member.value = { ...member.value, ...cleanMapped };
         } catch (error) {
             console.error('Failed to load member', error);
         } finally {
             loading.value = false;
         }
     }
+};
+
+onMounted(() => {
+    loadMember();
 });
+
+watch(
+    () => route.params.id,
+    (newId) => {
+        if (newId) {
+            loadMember();
+        }
+    }
+);
 
 const formatDate = (dateString: string | undefined): string => {
     if (!dateString) return '';
     if (dateString.includes('T')) {
-  
+        return dateString.split('T')[0];
+    }
+    return dateString;
+};
 
-const mapStatus = (status: string | undefined): string => {
+const mapStatus = (status: string | undefined | any): string => {
     if (!status) return 'active';
-    const s = status.toLowerCase();
+    const s = String(status).toLowerCase();
     if (s === 'aktiv') return 'active';
     if (s === 'passiv') return 'passive';
     if (s === 'ehrenmitglied') return 'honorary';
     return s;
 };
 
-const mapGender = (gender: string | undefined): string => {
+const mapGender = (gender: string | undefined | any): string => {
     if (!gender) return 'm';
-    const g = gender.toLowerCase();
+    const g = String(gender).toLowerCase();
     if (g === 'männlich') return 'm';
     if (g === 'weiblich') return 'f';
     if (g.includes('divers')) return 'd';
     return g;
-};      return dateString.split('T')[0];
-    }
-    return dateString;
+};
+
+const mapSalutation = (val: string | undefined | any): string => {
+    if (!val) return '';
+    const v = String(val).toLowerCase();
+    if (v === 'herr') return 'mr';
+    if (v === 'frau') return 'ms';
+    if (v === 'divers') return 'div';
+    if (v === 'firma') return 'company';
+    return v;
+};
+
+const mapMaritalStatus = (val: string | undefined | any): string => {
+    if (!val) return '';
+    const v = String(val).toLowerCase();
+    // German checks
+    if (v === 'ledig') return 'single';
+    if (v === 'verheiratet') return 'married';
+    if (v === 'geschieden') return 'divorced';
+    if (v === 'verwitwet') return 'widowed';
+    return v;
 };
 
 const saveMember = async () => {
@@ -342,7 +445,7 @@ const saveMember = async () => {
                     </div>
                     <div class="field">
                         <label for="mandate_granted_at" class="font-bold block mb-2">Mandatsdatum</label>
-                        <InputText id="mandate_granted_at" v-model="member.mandate_granted_at"  />
+                        <InputText id="mandate_granted_at" v-model="member.mandate_granted_at" type="date" />
                     </div>
                 </div>
             </Panel>
