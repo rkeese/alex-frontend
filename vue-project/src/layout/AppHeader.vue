@@ -47,9 +47,12 @@ const toggle = (event: Event) => {
     <header class="h-16 bg-white dark:bg-surface-900 border-b border-surface-200 dark:border-surface-700 flex items-center justify-between px-6 shadow-sm z-10">
         <div class="flex items-center gap-4">
             <!-- Mobile menu button could go here -->
-            <h2 class="text-lg font-semibold text-surface-700 dark:text-surface-0">Dashboard</h2>
+            <div class="flex flex-col">
+                <h2 class="text-lg font-semibold text-surface-700 dark:text-surface-0">Dashboard</h2>
+                <span v-if="authStore.clubName" class="text-xs text-surface-500 font-medium">{{ authStore.clubName }}</span>
+            </div>
         </div>
-        
+
         <div class="flex items-center gap-4">
             <Button icon="pi pi-bell" text rounded severity="secondary" aria-label="Notifications" />
             

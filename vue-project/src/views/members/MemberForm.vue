@@ -10,11 +10,13 @@ import Checkbox from 'primevue/checkbox';
 import Button from 'primevue/button';
 import Fluid from 'primevue/fluid';
 import Panel from 'primevue/panel';
+import Message from 'primevue/message';
 
 const route = useRoute();
 const router = useRouter();
 const isEdit = computed(() => route.params.id !== undefined && route.params.id !== '');
 const loading = ref(false);
+const validationError = ref('');
 
 const member = ref<Member>({
     member_number: '',
@@ -270,15 +272,31 @@ const mapMaritalStatus = (val: string | undefined | any): string => {
 
 const saveMember = async () => {
     loading.value = true;
+    validationError.value = '';
+
+    // Frontend Validation
+    const requiredFields: (keyof Member)[] = ['member_number', 'status', 'first_name', 'last_name', 'email', 'joined_at'];
+    const missing = requiredFields.filter(field => !member.value[field]);
+
+    if (missing.length > 0) {
+        validationError.value = 'Bitte füllen Sie alle Pflichtfelder aus (*).';
+        loading.value = false;
+        // Scroll to top to see error
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+    }
+
     try {
-        if (isEdit) {
+        if (isEdit.value) {
             await api.updateMember(route.params.id as string, member.value);
         } else {
             await api.createMember(member.value);
         }
         router.push('/members');
-    } catch (error) {
+    } catch (error: any) {
         console.error('Failed to save member', error);
+        validationError.value = 'Fehler beim Speichern: ' + (error.message || 'Unbekannter Fehler');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
         loading.value = false;
     }
@@ -295,16 +313,18 @@ const saveMember = async () => {
             </div>
         </div>
 
+        <Message v-if="validationError" severity="error" class="mb-4" :closable="false">{{ validationError }}</Message>
+
         <Fluid>
             <!-- Personal Information -->
             <Panel header="Persönliche Daten" toggleable class="mb-4">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div class="field">
-                        <label for="member_number" class="font-bold block mb-2">Mitglieds-Nr.</label>
+                        <label for="member_number" class="font-bold block mb-2">Mitglieds-Nr. *</label>
                         <InputText id="member_number" v-model="member.member_number" />
                     </div>
                     <div class="field">
-                        <label for="status" class="font-bold block mb-2">Status</label>
+                        <label for="status" class="font-bold block mb-2">Status *</label>
                         <Select id="status" v-model="member.status" :options="statusOptions" optionLabel="label" optionValue="value" />
                     </div>
                     <div class="field flex items-center gap-2 mt-8 md:col-start-4">
@@ -321,11 +341,11 @@ const saveMember = async () => {
                         <InputText id="title" v-model="member.title" />
                     </div>
                     <div class="field">
-                        <label for="first_name" class="font-bold block mb-2">Vorname</label>
+                        <label for="first_name" class="font-bold block mb-2">Vorname *</label>
                         <InputText id="first_name" v-model="member.first_name" />
                     </div>
                     <div class="field">
-                        <label for="last_name" class="font-bold block mb-2">Nachname</label>
+                        <label for="last_name" class="font-bold block mb-2">Nachname *</label>
                         <InputText id="last_name" v-model="member.last_name" />
                     </div>
 
@@ -365,7 +385,7 @@ const saveMember = async () => {
                     </div>
                     
                     <div class="field md:col-start-1">
-                        <label for="email" class="font-bold block mb-2">E-Mail</label>
+                        <label for="email" class="font-bold block mb-2">E-Mail *</label>
                         <InputText id="email" v-model="member.email" type="email" />
                     </div>
                     <div class="field">
@@ -387,7 +407,7 @@ const saveMember = async () => {
             <Panel header="Mitgliedschaftsdaten" toggleable class="mb-4">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div class="field">
-                        <label for="joined_at" class="font-bold block mb-2">Eintrittsdatum</label>
+                        <label for="joined_at" class="font-bold block mb-2">Eintrittsdatum *</label>
                         <InputText id="joined_at" v-model="member.joined_at" type="date" />
                     </div>
                     <div class="field">

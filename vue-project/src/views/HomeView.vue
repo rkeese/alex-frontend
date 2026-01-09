@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/auth';
 import { storeToRefs } from 'pinia';
+import { useRouter } from 'vue-router';
 import Card from 'primevue/card';
 import Button from 'primevue/button';
 
 const authStore = useAuthStore();
+const router = useRouter();
 const { clubId } = storeToRefs(authStore);
 </script>
 
@@ -16,7 +18,7 @@ const { clubId } = storeToRefs(authStore);
         <p class="text-surface-500 dark:text-surface-400 mt-1">Overview of your club's activities</p>
       </div>
       <div v-if="clubId">
-        <Button label="New Member" icon="pi pi-plus" />
+        <Button label="Neues Mitglied" icon="pi pi-plus" @click="router.push('/members/create')" />
       </div>
     </div>
     

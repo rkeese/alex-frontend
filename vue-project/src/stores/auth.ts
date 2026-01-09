@@ -6,6 +6,7 @@ import type { LoginRequest, RegisterRequest } from '@/types';
 export const useAuthStore = defineStore('auth', () => {
     const token = ref(localStorage.getItem('token') || '');
     const clubId = ref(localStorage.getItem('clubId') || '');
+    const clubName = ref(localStorage.getItem('clubName') || '');
     const permissions = ref<Set<string>>(new Set());
     const roles = ref<Set<string>>(new Set());
     const userEmail = ref<string>('');
@@ -163,7 +164,9 @@ export const useAuthStore = defineStore('auth', () => {
                 const clubs = await api.getClubs();
                 if (clubs.length > 0 && clubs[0].id) {
                     clubId.value = clubs[0].id;
+                    clubName.value = clubs[0].name;
                     localStorage.setItem('clubId', clubId.value);
+                    localStorage.setItem('clubName', clubName.value);
                 }
             } catch (e) {
                 console.error('Failed to fetch clubs after login', e);
@@ -192,15 +195,17 @@ export const useAuthStore = defineStore('auth', () => {
     function logout() {
         token.value = '';
         clubId.value = '';
+        clubName.value = '';
         permissions.value.clear();
         roles.value.clear();
         userEmail.value = '';
         userName.value = '';
         localStorage.removeItem('token');
         localStorage.removeItem('clubId');
+        localStorage.removeItem('clubName');
     }
 
-    return { token, clubId, isAuthenticated, permissions, roles, userEmail, userName, userRoleLabel, hasPermission, login, register, logout };
+    return { token, clubId, clubName, isAuthenticated, permissions, roles, userEmail, userName, userRoleLabel, hasPermission, login, register, logout };
 });
 
 function parseJwt (token: string) {
