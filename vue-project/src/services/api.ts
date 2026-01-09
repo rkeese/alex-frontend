@@ -202,6 +202,13 @@ class ApiClient {
         });
     }
 
+    async inviteMember(clubId: string, memberId: string): Promise<void> {
+        return this.request<void>(`/clubs/${clubId}/members/${memberId}/invite`, {
+            method: 'POST',
+            headers: this.getHeaders(false),
+        });
+    }
+
     async deleteMember(id: string): Promise<void> {
         return this.request<void>(`/members/${id}`, {
             method: 'DELETE',

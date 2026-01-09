@@ -15,16 +15,23 @@ export interface LoginResponse {
 }
 
 export interface Club {
-    id?: string; // Assuming ID is returned but not in create body
+    id?: string;
     registered_association: boolean;
     name: string;
-    type: string;
-    category: string;
-    number: string;
-    street_house_number: string;
-    postal_code: string;
-    city: string;
-    name_extension: string;
+    type?: string;
+    category?: string;
+    number?: string;
+    street_house_number?: string;
+    postal_code?: string;
+    city?: string;
+    name_extension?: string;
+    address_extension?: string;
+    tax_office_name?: string;
+    tax_office_tax_number?: string;
+    tax_office_assessment_period?: string;
+    tax_office_purpose?: string;
+    tax_office_decision_date?: string;
+    tax_office_decision_type?: string;
 }
 
 export interface Member {

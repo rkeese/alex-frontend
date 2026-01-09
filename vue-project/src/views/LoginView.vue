@@ -2,12 +2,12 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { api } from '@/services/api';
 import InputText from 'primevue/inputtext';
 import Password from 'primevue/password';
 import Button from 'primevue/button';
-import Card from 'primevue/card';
-import FloatLabel from 'primevue/floatlabel';
 import Message from 'primevue/message';
+import Select from 'primevue/select';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -17,6 +17,34 @@ const password = ref('');
 const loading = ref(false);
 const error = ref('');
 
+// Create Association Mode
+const isCreateAllMode = ref(false);
+const associationName = ref('');
+const associationType = ref('hobby_club');
+const registerEmail = ref('');
+const registerPassword = ref('');
+const confirmPassword = ref('');
+
+const clubTypes = [
+    { label: 'Sportverein', value: 'sport_club' },
+    { label: 'Musikverein', value: 'music_club' },
+    { label: 'Gesellschaftsverein', value: 'social_club' },
+    { label: 'Umwelt-/ Naturschutzverein', value: 'environment_club' },
+    { label: 'Kulturverein', value: 'cultural_club' },
+    { label: 'Hobby-/ Freizeitverein', value: 'hobby_club' },
+    { label: 'Sozial-/ Rettungsdienst', value: 'rescue_service' }
+];
+
+const toggleCreateMode = () => {
+    isCreateAllMode.value = !isCreateAllMode.value;
+    error.value = '';
+    associationName.value = '';
+    associationType.value = 'hobby_club';
+    registerEmail.value = '';
+    registerPassword.value = '';
+    confirmPassword.value = '';
+};
+
 const handleLogin = async () => {
     loading.value = true;
     error.value = '';
@@ -25,6 +53,47 @@ const handleLogin = async () => {
         router.push('/');
     } catch (e) {
         error.value = 'Login failed. Please check your credentials.';
+    } finally {
+        loading.value = false;
+    }
+};
+
+const handleCreateAssociation = async () => {
+    if (registerPassword.value !== confirmPassword.value) {
+        error.value = "Passwords do not match";
+        return;
+    }
+    loading.value = true;
+    error.value = '';
+    try {
+        // Try to register first. If user exists (409), fall back to login.
+        try {
+            await authStore.register({ email: registerEmail.value, password: registerPassword.value });
+        } catch (regError: any) {
+            if (regError.message && regError.message.includes('409')) {
+                // User already registered, try to login with provided credentials
+                await authStore.login({ email: registerEmail.value, password: registerPassword.value });
+            } else {
+                throw regError;
+            }
+        }
+        
+        // At this point we are logged in. Create the club.
+        // Note: Casting to any since we are selectively providing fields. Backend handles defaults/optionals.
+        const clubPayload = { 
+            name: associationName.value,
+            type: associationType.value || 'hobby_club',
+            registered_association: true 
+        } as any;
+
+        await api.createClub(clubPayload);
+        
+        // Login again to refresh permissions (admin role for new club)
+        await authStore.login({ email: registerEmail.value, password: registerPassword.value });
+        
+        router.push('/');
+    } catch (e: any) {
+        error.value = 'Failed to create association: ' + (e.message || e);
     } finally {
         loading.value = false;
     }
@@ -50,34 +119,81 @@ const handleLogin = async () => {
         <!-- Right Side - Form -->
         <div class="w-full lg:w-1/2 flex items-center justify-center p-8">
             <div class="w-full max-w-md">
-                <div class="text-center mb-8 lg:text-left">
-                    <h1 class="text-3xl font-bold text-surface-900 dark:text-surface-0 mb-2">Welcome Back</h1>
-                    <p class="text-surface-500 dark:text-surface-400">Please enter your details to sign in.</p>
+                
+                <div v-if="!isCreateAllMode">
+                    <div class="text-center mb-8 lg:text-left">
+                        <h1 class="text-3xl font-bold text-surface-900 dark:text-surface-0 mb-2">Welcome Back</h1>
+                        <p class="text-surface-500 dark:text-surface-400">Please enter your details to sign in.</p>
+                    </div>
+
+                    <form @submit.prevent="handleLogin" class="flex flex-col gap-6">
+                        <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
+                        
+                        <div class="flex flex-col gap-2">
+                            <label for="email" class="font-medium text-surface-900 dark:text-surface-0">Email</label>
+                            <InputText id="email" v-model="email" class="w-full" type="email" placeholder="Enter your email" required />
+                        </div>
+
+                        <div class="flex flex-col gap-2">
+                            <div class="flex justify-between items-center">
+                                <label for="password" class="font-medium text-surface-900 dark:text-surface-0">Password</label>
+                                <a href="#" class="text-sm text-primary-600 hover:text-primary-700 font-medium">Forgot password?</a>
+                            </div>
+                            <Password id="password" v-model="password" class="w-full" :feedback="false" toggleMask inputClass="w-full" placeholder="Enter your password" required />
+                        </div>
+
+                        <Button type="submit" label="Sign In" icon="pi pi-sign-in" :loading="loading" class="w-full" />
+                        
+                        <div class="text-center mt-4">
+                            <span class="text-surface-600 dark:text-surface-300">New here? </span>
+                            <a href="#" @click.prevent="toggleCreateMode" class="text-primary-600 hover:text-primary-700 font-medium">Create new Association</a>
+                        </div>
+                    </form>
                 </div>
 
-                <form @submit.prevent="handleLogin" class="flex flex-col gap-6">
-                    <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
-                    
-                    <div class="flex flex-col gap-2">
-                        <label for="email" class="font-medium text-surface-900 dark:text-surface-0">Email</label>
-                        <InputText id="email" v-model="email" class="w-full" type="email" placeholder="Enter your email" required />
+                <div v-else>
+                     <div class="text-center mb-8 lg:text-left">
+                        <h1 class="text-3xl font-bold text-surface-900 dark:text-surface-0 mb-2">Create Association</h1>
+                        <p class="text-surface-500 dark:text-surface-400">Register as administrator and set up your club.</p>
                     </div>
 
-                    <div class="flex flex-col gap-2">
-                        <div class="flex justify-between items-center">
-                            <label for="password" class="font-medium text-surface-900 dark:text-surface-0">Password</label>
-                            <a href="#" class="text-sm text-primary-600 hover:text-primary-700 font-medium">Forgot password?</a>
+                    <form @submit.prevent="handleCreateAssociation" class="flex flex-col gap-6">
+                         <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
+                         
+                         <div class="flex flex-col gap-2">
+                            <label for="clubName" class="font-medium text-surface-900 dark:text-surface-0">Association Name</label>
+                            <InputText id="clubName" v-model="associationName" class="w-full" placeholder="e.g. Chess Club 2024" required />
                         </div>
-                        <Password id="password" v-model="password" class="w-full" :feedback="false" toggleMask inputClass="w-full" placeholder="Enter your password" required />
-                    </div>
 
-                    <Button type="submit" label="Sign In" icon="pi pi-sign-in" :loading="loading" class="w-full" />
-                    
-                    <div class="text-center mt-4">
-                        <span class="text-surface-600 dark:text-surface-300">Don't have an account? </span>
-                        <router-link to="/register" class="text-primary-600 hover:text-primary-700 font-medium">Create account</router-link>
-                    </div>
-                </form>
+                        <div class="flex flex-col gap-2">
+                            <label for="clubType" class="font-medium text-surface-900 dark:text-surface-0">Association Type</label>
+                            <Select id="clubType" v-model="associationType" :options="clubTypes" optionLabel="label" optionValue="value" placeholder="Select a type" class="w-full" />
+                        </div>
+
+                        <div class="flex flex-col gap-2">
+                            <label for="regEmail" class="font-medium text-surface-900 dark:text-surface-0">Email</label>
+                            <InputText id="regEmail" v-model="registerEmail" class="w-full" type="email" placeholder="Enter your email" required />
+                        </div>
+
+                         <div class="flex flex-col gap-2">
+                            <label for="regPassword" class="font-medium text-surface-900 dark:text-surface-0">Password</label>
+                            <Password id="regPassword" v-model="registerPassword" class="w-full" toggleMask inputClass="w-full" placeholder="Choose a password" required />
+                        </div>
+                        
+                         <div class="flex flex-col gap-2">
+                            <label for="confirmPassword" class="font-medium text-surface-900 dark:text-surface-0">Confirm Password</label>
+                            <Password id="confirmPassword" v-model="confirmPassword" class="w-full" :feedback="false" toggleMask inputClass="w-full" placeholder="Confirm password" required />
+                        </div>
+
+                        <Button type="submit" label="Create Association" icon="pi pi-plus-circle" :loading="loading" class="w-full" />
+                        
+                        <div class="text-center mt-4">
+                            <span class="text-surface-600 dark:text-surface-300">Already registered? </span>
+                            <a href="#" @click.prevent="toggleCreateMode" class="text-primary-600 hover:text-primary-700 font-medium">Sign In</a>
+                        </div>
+                    </form>
+                </div>
+
             </div>
         </div>
     </div>

@@ -77,6 +77,26 @@ const deleteMember = async (member: any) => {
         }
     }
 };
+
+const inviteMember = async (member: any) => {
+    const id = getMemberId(member);
+    if (!id) return;
+
+    if (!member.email) {
+        alert('Mitglied hat keine E-Mail-Adresse und kann nicht eingeladen werden.');
+        return;
+    }
+
+    if (confirm(`Möchten Sie ${member.first_name} ${member.last_name} einladen?`)) {
+        try {
+            await api.inviteMember(authStore.clubId, id);
+            alert('Einladung wurde versendet.');
+        } catch (error: any) {
+            console.error('Failed to invite member', error);
+            alert('Einladung fehlgeschlagen: ' + error.message);
+        }
+    }
+};
 </script>
 
 <template>
@@ -107,6 +127,8 @@ const deleteMember = async (member: any) => {
                     <div class="flex gap-2">
                         <Button v-if="authStore.hasPermission('members:write')" icon="pi pi-pencil" severity="info" text rounded aria-label="Bearbeiten"
                             @click="editMember(slotProps.data)" />
+                        <Button v-if="authStore.hasPermission('members:write') && slotProps.data.email" icon="pi pi-envelope" severity="success" text rounded aria-label="Einladen"
+                            @click="inviteMember(slotProps.data)" v-tooltip.top="'Mitglied einladen'" />
                         <Button v-if="authStore.hasPermission('members:delete')" icon="pi pi-trash" severity="danger" text rounded aria-label="Löschen"
                             @click="deleteMember(slotProps.data)" />
                     </div>
