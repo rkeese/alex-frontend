@@ -9,12 +9,14 @@ export const useAuthStore = defineStore('auth', () => {
     const clubName = ref(localStorage.getItem('clubName') || '');
     const permissions = ref<Set<string>>(new Set());
     const roles = ref<Set<string>>(new Set());
+    const isSystemAdmin = ref(false);
     const userEmail = ref<string>('');
     const userName = ref<string>('');
     
     const isAuthenticated = computed(() => !!token.value);
     
     const userRoleLabel = computed(() => {
+        if (isSystemAdmin.value) return 'System Administrator';
         if (roles.value.size === 0) return 'User';
         return Array.from(roles.value).join(', ');
     });
@@ -46,6 +48,22 @@ export const useAuthStore = defineStore('auth', () => {
                 permissions.value = new Set(payload.permissions);
             } else {
                 permissions.value.clear();
+            }
+
+            // Extract System Admin Flag
+            // Check possible claim names: IsSysAdmin (Go/backend), is_sys_admin (standard claim style)
+            // Handle both boolean true and string "true"
+            const isSysAdminClaim = payload.IsSysAdmin || payload.is_sys_admin || payload.issysadmin;
+            const isSysAdmin = isSysAdminClaim === true || isSysAdminClaim === 'true';
+            
+            // Allow explicit specific users to be admins (Fallback/Dev)
+            const adminEmails = ['admin@example.com', 'raimund.keese@web.de'];
+            const isEmailAdmin = adminEmails.includes(userEmail.value);
+
+            if (isSysAdmin || isEmailAdmin) {
+                isSystemAdmin.value = true;
+            } else {
+                isSystemAdmin.value = false;
             }
 
             // Extract roles - try common claim names and handle both string and array formats
@@ -80,14 +98,21 @@ export const useAuthStore = defineStore('auth', () => {
             console.error('Failed to parse token', e);
             permissions.value.clear();
             roles.value.clear();
+            isSystemAdmin.value = false;
             userEmail.value = '';
             userName.value = '';
         }
     }
 
     function hasPermission(permission: string): boolean {
+        // System Administrator Bypass
+        if (isSystemAdmin.value) {
+            return true;
+        }
+
         // Hardcoded Superuser for dev/testing or specific admin account
-        if (userEmail.value === 'admin@example.com') {
+        // (This is now largely redundant due to the isSystemAdmin check above, but kept as safety)
+        if (userEmail.value === 'admin@example.com' || userEmail.value === 'raimund.keese@web.de') {
             return true;
         }
 
@@ -198,6 +223,7 @@ export const useAuthStore = defineStore('auth', () => {
         clubName.value = '';
         permissions.value.clear();
         roles.value.clear();
+        isSystemAdmin.value = false;
         userEmail.value = '';
         userName.value = '';
         localStorage.removeItem('token');
@@ -205,7 +231,14 @@ export const useAuthStore = defineStore('auth', () => {
         localStorage.removeItem('clubName');
     }
 
-    return { token, clubId, clubName, isAuthenticated, permissions, roles, userEmail, userName, userRoleLabel, hasPermission, login, register, logout };
+    function setClub(id: string, name: string) {
+        clubId.value = id;
+        clubName.value = name;
+        localStorage.setItem('clubId', id);
+        localStorage.setItem('clubName', name);
+    }
+
+    return { token, clubId, clubName, isAuthenticated, permissions, roles, isSystemAdmin, userEmail, userName, userRoleLabel, hasPermission, login, register, logout, setClub };
 });
 
 function parseJwt (token: string) {

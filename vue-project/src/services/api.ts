@@ -114,6 +114,13 @@ class ApiClient {
         });
     }
 
+    async deleteClub(id: string): Promise<void> {
+        return this.request<void>(`/clubs/${id}`, {
+            method: 'DELETE',
+            headers: this.getHeaders(false),
+        });
+    }
+
     // User Management / Admin
     // Note: 'getUsers' isn't explicitly in the provided API doc snippet, 
     // but essential for an admin view. Assuming endpoint /users exists or is needed.

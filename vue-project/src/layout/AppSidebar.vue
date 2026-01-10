@@ -39,10 +39,16 @@ const items = computed(() => {
         menuItems.push({ label: 'Dokumente', icon: 'pi pi-file', command: () => router.push('/documents') });
     }
 
-    if (authStore.hasPermission('users:manage')) {
-        menuItems.push({ label: 'Verwaltung', icon: 'pi pi-cog', items: [
-            { label: 'Benutzerverwaltung', icon: 'pi pi-users', command: () => router.push('/admin/users') }
-        ] } as any);
+    if (authStore.hasPermission('users:manage') || authStore.hasPermission('clubs:manage')) {
+        const adminItems = [];
+        if (authStore.hasPermission('users:manage')) {
+             adminItems.push({ label: 'Benutzerverwaltung', icon: 'pi pi-users', command: () => router.push('/admin/users') });
+        }
+        if (authStore.hasPermission('clubs:manage')) {
+             adminItems.push({ label: 'Vereinsverwaltung', icon: 'pi pi-building', command: () => router.push('/admin/clubs') });
+        }
+        
+        menuItems.push({ label: 'Verwaltung', icon: 'pi pi-cog', items: adminItems } as any);
     }
 
     return menuItems;

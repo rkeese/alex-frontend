@@ -93,6 +93,12 @@ const router = createRouter({
             name: 'admin-users',
             component: UserManagementView,
             meta: { permission: 'users:manage' } // Assuming this permission exists or needs to be added to RBAC
+        },
+        {
+            path: 'admin/clubs',
+            name: 'admin-clubs',
+            component: () => import('../views/admin/ClubManagementView.vue'),
+            meta: { permission: 'clubs:manage' }
         }
       ]
     },
