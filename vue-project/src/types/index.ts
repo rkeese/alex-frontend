@@ -171,3 +171,11 @@ export interface BirthdayEntry {
     date: string;
     new_age: number;
 }
+
+export interface AnniversaryEntry {
+    FirstName: string;
+    LastName: string;
+    JoinedAt: string;
+    AnniversaryDate: string;
+    MembershipYears: number;
+}

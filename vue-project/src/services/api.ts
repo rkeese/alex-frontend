@@ -232,6 +232,40 @@ class ApiClient {
         window.URL.revokeObjectURL(url);
     }
 
+    async getAnniversaryList(year?: number, years?: number[]): Promise<import('../types').AnniversaryEntry[]> {
+        const params = new URLSearchParams();
+        if (year) params.append('year', year.toString());
+        if (years && years.length > 0) params.append('years', years.join(','));
+        
+        return this.request<import('../types').AnniversaryEntry[]>(`/members/anniversaries?${params.toString()}`, {
+            headers: this.getHeaders(),
+        });
+    }
+
+    async downloadAnniversaryListPdf(year?: number, years?: number[]): Promise<void> {
+        const params = new URLSearchParams();
+        if (year) params.append('year', year.toString());
+        if (years && years.length > 0) params.append('years', years.join(','));
+
+        const response = await fetch(`${BASE_URL}/members/anniversaries/pdf?${params.toString()}`, {
+            headers: this.getHeaders(),
+        });
+
+        if (!response.ok) {
+           throw new Error('Failed to download PDF');
+        }
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Jubilaeumsliste_${year || new Date().getFullYear()}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    }
+
     async getMember(id: string): Promise<Member> {
         return this.request<Member>(`/members/${id}`, {
             headers: this.getHeaders(),

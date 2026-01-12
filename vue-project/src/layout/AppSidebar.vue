@@ -19,7 +19,8 @@ const items = computed(() => {
             items: [
                 { label: 'Liste', icon: 'pi pi-list', command: () => router.push('/members') },
                 { label: 'Statistik', icon: 'pi pi-chart-bar', command: () => router.push('/members/statistics') },
-                { label: 'Geburtstage', icon: 'pi pi-calendar', command: () => router.push('/members/birthdays') }
+                { label: 'Geburtstage', icon: 'pi pi-calendar', command: () => router.push('/members/birthdays') },
+                { label: 'Jubiläen', icon: 'pi pi-calendar-plus', command: () => router.push('/members/anniversaries') }
             ]
         } as any);
     }
