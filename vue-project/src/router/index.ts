@@ -5,6 +5,7 @@ import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import PlaceholderView from '../views/PlaceholderView.vue'
 import MemberListView from '../views/members/MemberListView.vue'
+import MemberStatisticsView from '../views/members/MemberStatisticsView.vue'
 import MemberForm from '../views/members/MemberForm.vue'
 import MemberImportView from '../views/members/MemberImportView.vue'
 import UserManagementView from '../views/admin/UserManagementView.vue'
@@ -51,6 +52,12 @@ const router = createRouter({
           name: 'members-import',
           component: MemberImportView,
           meta: { permission: 'members:write' }
+        },
+        {
+          path: 'members/statistics',
+          name: 'members-statistics',
+          component: MemberStatisticsView,
+          meta: { permission: 'members:read' }
         },
         {
           path: 'members/:id/edit',

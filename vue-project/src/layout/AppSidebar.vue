@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import Menu from 'primevue/menu';
+import PanelMenu from 'primevue/panelmenu';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 
@@ -13,7 +13,14 @@ const items = computed(() => {
     ];
 
     if (authStore.hasPermission('members:read') || authStore.hasPermission('members:write')) {
-        menuItems.push({ label: 'Mitglieder', icon: 'pi pi-users', command: () => router.push('/members') });
+        menuItems.push({
+            label: 'Mitglieder',
+            icon: 'pi pi-users',
+            items: [
+                { label: 'Liste', icon: 'pi pi-list', command: () => router.push('/members') },
+                { label: 'Statistik', icon: 'pi pi-chart-bar', command: () => router.push('/members/statistics') }
+            ]
+        } as any);
     }
 
     if (authStore.hasPermission('departments:read') || authStore.hasPermission('departments:write')) {
@@ -62,7 +69,7 @@ const items = computed(() => {
             <span class="font-bold text-xl text-surface-900 dark:text-surface-0">Alex Club</span>
         </div>
         <div class="flex-1 px-4">
-            <Menu :model="items" class="w-full border-none bg-transparent" />
+            <PanelMenu :model="items" class="w-full border-none bg-transparent" />
         </div>
         <div class="p-4 text-xs text-center text-surface-500">
             v1.0.0

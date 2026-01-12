@@ -155,3 +155,11 @@ export interface AssignRoleRequest {
     role_name: string;
     club_id?: string;
 }
+
+export interface MemberStatistics {
+    birth_year: number;
+    count_m: number;
+    count_f: number;
+    count_d: number;
+    count_total: number;
+}

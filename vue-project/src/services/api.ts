@@ -187,6 +187,12 @@ class ApiClient {
         });
     }
 
+    async getMemberStatistics(year: number): Promise<import('../types').MemberStatistics[]> {
+        return this.request<import('../types').MemberStatistics[]>(`/members/statistics?year=${year}`, {
+            headers: this.getHeaders(),
+        });
+    }
+
     async getMember(id: string): Promise<Member> {
         return this.request<Member>(`/members/${id}`, {
             headers: this.getHeaders(),
