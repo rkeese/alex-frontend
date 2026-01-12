@@ -18,7 +18,8 @@ const items = computed(() => {
             icon: 'pi pi-users',
             items: [
                 { label: 'Liste', icon: 'pi pi-list', command: () => router.push('/members') },
-                { label: 'Statistik', icon: 'pi pi-chart-bar', command: () => router.push('/members/statistics') }
+                { label: 'Statistik', icon: 'pi pi-chart-bar', command: () => router.push('/members/statistics') },
+                { label: 'Geburtstage', icon: 'pi pi-calendar', command: () => router.push('/members/birthdays') }
             ]
         } as any);
     }

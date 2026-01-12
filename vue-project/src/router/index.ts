@@ -6,6 +6,7 @@ import RegisterView from '../views/RegisterView.vue'
 import PlaceholderView from '../views/PlaceholderView.vue'
 import MemberListView from '../views/members/MemberListView.vue'
 import MemberStatisticsView from '../views/members/MemberStatisticsView.vue'
+import BirthdayListView from '../views/members/BirthdayListView.vue'
 import MemberForm from '../views/members/MemberForm.vue'
 import MemberImportView from '../views/members/MemberImportView.vue'
 import UserManagementView from '../views/admin/UserManagementView.vue'
@@ -57,6 +58,12 @@ const router = createRouter({
           path: 'members/statistics',
           name: 'members-statistics',
           component: MemberStatisticsView,
+          meta: { permission: 'members:read' }
+        },
+        {
+          path: 'members/birthdays',
+          name: 'members-birthdays',
+          component: BirthdayListView,
           meta: { permission: 'members:read' }
         },
         {

@@ -193,6 +193,40 @@ class ApiClient {
         });
     }
 
+    async getBirthdayList(year?: number, milestones?: number[]): Promise<import('../types').BirthdayEntry[]> {
+        const params = new URLSearchParams();
+        if (year) params.append('year', year.toString());
+        if (milestones && milestones.length > 0) params.append('milestones', milestones.join(','));
+        
+        return this.request<import('../types').BirthdayEntry[]>(`/members/birthdays?${params.toString()}`, {
+            headers: this.getHeaders(),
+        });
+    }
+
+    async downloadBirthdayListPdf(year?: number, milestones?: number[]): Promise<void> {
+        const params = new URLSearchParams();
+        if (year) params.append('year', year.toString());
+        if (milestones && milestones.length > 0) params.append('milestones', milestones.join(','));
+
+        const response = await fetch(`${BASE_URL}/members/birthdays/pdf?${params.toString()}`, {
+            headers: this.getHeaders(),
+        });
+
+        if (!response.ok) {
+           throw new Error('Failed to download PDF');
+        }
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Geburtstagsliste_${year || new Date().getFullYear()}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    }
+
     async getMember(id: string): Promise<Member> {
         return this.request<Member>(`/members/${id}`, {
             headers: this.getHeaders(),

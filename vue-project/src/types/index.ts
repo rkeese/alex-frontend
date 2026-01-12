@@ -163,3 +163,11 @@ export interface MemberStatistics {
     count_d: number;
     count_total: number;
 }
+
+export interface BirthdayEntry {
+    first_name: string;
+    last_name: string;
+    birth_date: string;
+    date: string;
+    new_age: number;
+}
