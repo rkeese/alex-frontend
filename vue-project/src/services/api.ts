@@ -60,12 +60,17 @@ class ApiClient {
         if (response.status === 204) {
             return {} as T;
         }
-        // Check if response is JSON
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.indexOf("application/json") !== -1) {
-            return response.json();
+        
+        // Try to parse as JSON regardless of Content-Type header to be more robust
+        try {
+            const text = await response.text();
+            if (!text) return {} as T;
+            return JSON.parse(text);
+        } catch (e) {
+            console.error('API Response Parsing Failed for url:', url);
+            // Re-read text is not possible, but we know it failed.
+            return {} as T;
         }
-        return {} as T; // For non-JSON responses or empty bodies
     }
 
     // Auth

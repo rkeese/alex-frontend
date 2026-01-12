@@ -99,7 +99,9 @@ const loadMember = async () => {
     if (isEdit.value) {
         loading.value = true;
         try {
+            console.log("Fetching member with ID:", route.params.id);
             let data: any = await api.getMember(route.params.id as string);
+            console.log('Raw member API response:', data);
             
             // Handle potential response wrappers
             if (data) {
@@ -107,30 +109,30 @@ const loadMember = async () => {
                 else if (data.member) { data = data.member; }
                 else if (Array.isArray(data) && data.length > 0) { data = data[0]; }
             }
-            
+
+            // --- RESTORED ROBUST MAPPING ---
             // Helper to get value from search keys ignoring case or specific naming conventions
             const getVal = (keys: string[]) => {
+                // 1. Exact match
                 for (const key of keys) {
                     if (data[key] !== undefined && data[key] !== null) return data[key];
-                    
-                    // Try PascalCase / TitleCase
-                    // e.g. "member_number" -> "MemberNumber", "city" -> "City"
-                    const pascal = key.split('_').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join('');
-                    if (data[pascal] !== undefined && data[pascal] !== null) return data[pascal];
-                    
-                    // Try camelCase
-                    // e.g. "member_number" -> "memberNumber", "First_Name" -> "firstName"
-                    const camel = pascal.charAt(0).toLowerCase() + pascal.slice(1);
-                    if (data[camel] !== undefined && data[camel] !== null) return data[camel];
-
-                    // Try lower case for single words e.g. "ID" -> "id"
-                    const lower = key.toLowerCase();
-                    if (data[lower] !== undefined && data[lower] !== null) return data[lower];
                 }
+
+                // 2. Case-insensitive search on all data keys
+                // This is the most robust backup
+                const dataKeys = Object.keys(data);
+                for (const key of keys) {
+                     const lowerKey = key.toLowerCase().replace(/_/g, '');
+                     const foundKey = dataKeys.find(k => k.toLowerCase().replace(/_/g, '') === lowerKey);
+                     if (foundKey && data[foundKey] !== undefined && data[foundKey] !== null) {
+                         return data[foundKey];
+                     }
+                }
+                
                 return undefined;
             };
 
-            // Enhanced mapping to handle snake_case (API spec) and PascalCase (Go default)
+            // Map backend fields to frontend model
             const mappedMember: Partial<Member> = {
                 member_number: getVal(['member_number', 'MemberNumber']),
                 first_name: getVal(['first_name', 'FirstName']),
@@ -193,15 +195,14 @@ const loadMember = async () => {
                  mappedMember.sepa_mandate_granted = sepaVal ? String(sepaVal) : '';
             }
 
-            // Merge loaded data with default structure to ensure all fields are reactive
-            // Filter out undefined values from mappedMember to avoid overwriting defaults with undefined
+            // Clean undefined values
             const cleanMapped = Object.fromEntries(
                 Object.entries(mappedMember).filter(([_, v]) => v !== undefined)
             );
 
-            console.log('Mapped member data:', cleanMapped); // Debug log
-
+            console.log('Mapped member data:', cleanMapped); 
             member.value = { ...member.value, ...cleanMapped };
+            // --- END RESTORED MAPPING ---
         } catch (error) {
             console.error('Failed to load member', error);
         } finally {
