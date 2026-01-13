@@ -360,6 +360,12 @@ class ApiClient {
         });
     }
 
+    async getDepartment(id: string): Promise<Department> {
+        return this.request<Department>(`/departments/${id}`, {
+            headers: this.getHeaders(),
+        });
+    }
+
     async createDepartment(department: Department): Promise<Department> {
         return this.request<Department>('/departments', {
             method: 'POST',
@@ -423,6 +429,27 @@ class ApiClient {
             method: 'POST',
             headers: this.getHeaders(),
             body: JSON.stringify(account),
+        });
+    }
+
+    async getBankAccount(id: string): Promise<BankAccount> {
+        return this.request<BankAccount>(`/finance/bank-accounts/${id}`, {
+            headers: this.getHeaders(),
+        });
+    }
+
+    async updateBankAccount(id: string, account: BankAccount): Promise<BankAccount> {
+        return this.request<BankAccount>(`/finance/bank-accounts/${id}`, {
+            method: 'PUT',
+            headers: this.getHeaders(),
+            body: JSON.stringify(account),
+        });
+    }
+
+    async deleteBankAccount(id: string): Promise<void> {
+        return this.request<void>(`/finance/bank-accounts/${id}`, {
+            method: 'DELETE',
+            headers: this.getHeaders(),
         });
     }
 

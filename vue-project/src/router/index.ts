@@ -11,6 +11,7 @@ import AnniversaryListView from '../views/members/AnniversaryListView.vue'
 import MemberForm from '../views/members/MemberForm.vue'
 import MemberImportView from '../views/members/MemberImportView.vue'
 import UserManagementView from '../views/admin/UserManagementView.vue'
+import ClubSettingsView from '../views/admin/ClubSettingsView.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({
@@ -109,8 +110,12 @@ const router = createRouter({
           component: PlaceholderView,
           meta: { permission: 'documents:read' }
         },
-        {
-            path: 'admin/users',
+        {          path: 'admin/club-settings',
+          name: 'club-settings',
+          component: ClubSettingsView,
+          meta: { permission: 'club:write' }
+        },
+        {            path: 'admin/users',
             name: 'admin-users',
             component: UserManagementView,
             meta: { permission: 'users:manage' } // Assuming this permission exists or needs to be added to RBAC

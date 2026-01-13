@@ -48,6 +48,10 @@ const items = computed(() => {
         menuItems.push({ label: 'Dokumente', icon: 'pi pi-file', command: () => router.push('/documents') });
     }
 
+    if (authStore.hasPermission('club:write')) {
+        menuItems.push({ label: 'Verein', icon: 'pi pi-building', command: () => router.push('/admin/club-settings') });
+    }
+
     if (authStore.hasPermission('users:manage') || authStore.hasPermission('clubs:manage')) {
         const adminItems = [];
         if (authStore.hasPermission('users:manage')) {
