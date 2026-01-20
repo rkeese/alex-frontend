@@ -32,7 +32,8 @@ const loadPreview = async () => {
     loading.value = true;
     try {
         const dateStr = formatDate(executionDate.value);
-        members.value = await api.getSepaMembers(dateStr);
+        const response = await api.getSepaMembers(dateStr);
+        members.value = Array.isArray(response) ? response : [];
         showPreview.value = true;
         if (members.value.length === 0) {
             toast.add({ severity: 'info', summary: 'Info', detail: 'Keine fälligen Beiträge für das gewählte Datum gefunden.', life: 3000 });
