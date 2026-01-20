@@ -104,6 +104,21 @@ export interface Receipt {
     donor_id?: string;
 }
 
+export interface SepaMember {
+    member_id: string;
+    first_name: string;
+    last_name: string;
+    amount: number;
+    fee_label: string;
+    member_iban: string;
+    member_bic: string;
+    mandate_reference: string;
+    mandate_issued_at: string;
+    sequence_type: string;
+    target_account_holder: string;
+    target_iban: string;
+}
+
 export interface BankAccount {
     id?: string;
     name: string;

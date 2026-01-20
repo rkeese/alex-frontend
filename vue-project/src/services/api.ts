@@ -7,6 +7,7 @@ import type {
     Department,
     BookingAccount,
     Receipt,
+    SepaMember,
     BankAccount,
     SepaXmlRequest,
     CalendarEvent,
@@ -449,6 +450,12 @@ class ApiClient {
     async deleteBankAccount(id: string): Promise<void> {
         return this.request<void>(`/finance/bank-accounts/${id}`, {
             method: 'DELETE',
+            headers: this.getHeaders(),
+        });
+    }
+
+    async getSepaMembers(executionDate: string): Promise<SepaMember[]> {
+        return this.request<SepaMember[]>(`/finance/sepa-members?execution_date=${executionDate}`, {
             headers: this.getHeaders(),
         });
     }

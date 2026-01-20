@@ -10,6 +10,7 @@ import BirthdayListView from '../views/members/BirthdayListView.vue'
 import AnniversaryListView from '../views/members/AnniversaryListView.vue'
 import MemberForm from '../views/members/MemberForm.vue'
 import MemberImportView from '../views/members/MemberImportView.vue'
+import SepaDirectDebitView from '../views/members/SepaDirectDebitView.vue'
 import UserManagementView from '../views/admin/UserManagementView.vue'
 import ClubSettingsView from '../views/admin/ClubSettingsView.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -55,6 +56,12 @@ const router = createRouter({
           name: 'members-import',
           component: MemberImportView,
           meta: { permission: 'members:write' }
+        },
+        {
+          path: 'members/sepa',
+          name: 'members-sepa',
+          component: SepaDirectDebitView,
+          meta: { permission: 'finance:read' }
         },
         {
           path: 'members/statistics',

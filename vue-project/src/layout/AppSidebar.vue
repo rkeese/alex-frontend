@@ -13,15 +13,21 @@ const items = computed(() => {
     ];
 
     if (authStore.hasPermission('members:read') || authStore.hasPermission('members:write')) {
+        const memberItems = [
+            { label: 'Liste', icon: 'pi pi-list', command: () => router.push('/members') },
+            { label: 'Statistik', icon: 'pi pi-chart-bar', command: () => router.push('/members/statistics') },
+            { label: 'Geburtstage', icon: 'pi pi-calendar', command: () => router.push('/members/birthdays') },
+            { label: 'Jubiläen', icon: 'pi pi-calendar-plus', command: () => router.push('/members/anniversaries') }
+        ];
+
+        if (authStore.hasPermission('finance:read') || authStore.hasPermission('finance:write')) {
+            memberItems.push({ label: 'SEPA Einzug', icon: 'pi pi-wallet', command: () => router.push('/members/sepa') });
+        }
+
         menuItems.push({
             label: 'Mitglieder',
             icon: 'pi pi-users',
-            items: [
-                { label: 'Liste', icon: 'pi pi-list', command: () => router.push('/members') },
-                { label: 'Statistik', icon: 'pi pi-chart-bar', command: () => router.push('/members/statistics') },
-                { label: 'Geburtstage', icon: 'pi pi-calendar', command: () => router.push('/members/birthdays') },
-                { label: 'Jubiläen', icon: 'pi pi-calendar-plus', command: () => router.push('/members/anniversaries') }
-            ]
+            items: memberItems
         } as any);
     }
 
