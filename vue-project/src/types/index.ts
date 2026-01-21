@@ -60,22 +60,35 @@ export interface Member {
     notes: string;
 
     // Contribution / Role info in CSV
-    contribution_name: string;
-    contribution_type: string;
-    contribution_amount: string; // decimal string
-    contribution_period: string; 
-    contribution_due_date: string;
+    contribution_name?: string;
+    contribution_type?: string;
+    contribution_amount?: string; // decimal string
+    contribution_period?: string; 
+    contribution_due_date?: string;
+
+    // New Fee structure
+    fee_amount?: number;
+    fee_period?: string; // 'monthly', 'quarterly', 'half_yearly', 'yearly'
+    fee_label?: string;
+    fee_assignment?: string;
+    fee_maturity?: string; // YYYY-MM-DD
+    fee_starts_at?: string; // YYYY-MM-DD
 
     // Payment / SEPA
     payment_method: string;
     iban: string;
     account_holder: string;
-    sepa_mandate_granted: string; // "Ja", "Nein", "Einzug", or date
+    sepa_mandate_granted: boolean | string; // Boolean in payload, might be string in UI handling temporarily
     mandate_reference: string;
     mandate_type: string;
+    mandate_kind: string; // 'recurrent' | 'one_off'
     next_debit_type: string;
     mandate_granted_at: string;
+    mandate_valid_until: string; // YYYY-MM-DD
     last_usage_at: string;
+    
+    // Internal
+    bank_account_id?: string;
 }
 
 export interface Department {

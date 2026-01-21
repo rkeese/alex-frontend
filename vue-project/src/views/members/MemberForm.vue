@@ -46,7 +46,15 @@ const member = ref<Member>({
     joined_at: new Date().toISOString().split('T')[0],
     left_at: '',
     
-    // Contribution
+    // Fees (New Structure)
+    fee_amount: 0,
+    fee_period: 'yearly',
+    fee_label: '',
+    fee_assignment: '1_ideel',
+    fee_maturity: '',
+    fee_starts_at: new Date().toISOString().split('T')[0],
+    
+    // Legacy Contribution (kept for compatibility if needed, but UI will focus on Fees)
     contribution_name: '',
     contribution_type: '',
     contribution_amount: '',
@@ -54,18 +62,44 @@ const member = ref<Member>({
     contribution_due_date: '',
     
     // Payment
-    payment_method: '',
+    payment_method: 'sepa',
     iban: '',
     account_holder: '',
-    sepa_mandate_granted: '',
+    sepa_mandate_granted: false, // Now boolean
     mandate_reference: '',
-    mandate_type: '',
+    mandate_type: 'basic',
+    mandate_kind: 'recurrent',
     next_debit_type: '',
     mandate_granted_at: '',
+    mandate_valid_until: '',
     last_usage_at: '',
     
     notes: ''
 });
+
+const feePeriodOptions = [
+    { label: 'monatlich', value: 'monthly' },
+    { label: 'vierteljährlich', value: 'quarterly' },
+    { label: 'halbjährlich', value: 'half_yearly' },
+    { label: 'jährlich', value: 'yearly' }
+];
+
+const paymentMethodOptions = [
+    { label: 'SEPA Lastschrift', value: 'sepa' },
+    { label: 'Überweisung', value: 'transfer' },
+    { label: 'Bar', value: 'cash' },
+    { label: 'Sonstiges', value: 'other' }
+];
+
+const mandateTypeOptions = [
+    { label: 'Basismandat', value: 'basic' },
+    // { label: 'Firmenmandat', value: 'company' } // potential future use
+];
+
+const mandateKindOptions = [
+    { label: 'Bis auf Widerruf', value: 'recurrent' },
+    { label: 'Einmalig', value: 'one_off' }
+];
 
 const genderOptions = [
     { label: 'Männlich', value: 'm' },
@@ -161,7 +195,15 @@ const loadMember = async () => {
                 left_at: formatDate(getVal(['left_at', 'LeftAt', 'member_until', 'MemberUntil'])),
                 honorary: getVal(['honorary', 'Honorary', 'honorary_member', 'HonoraryMember']),
 
-                // Contribution
+                // Fees
+                fee_amount: getVal(['fee_amount', 'FeeAmount', 'contribution_amount', 'ContributionAmount']),
+                fee_period: getVal(['fee_period', 'FeePeriod', 'contribution_period', 'ContributionPeriod']),
+                fee_label: getVal(['fee_label', 'FeeLabel', 'contribution_name', 'ContributionName']),
+                fee_assignment: getVal(['fee_assignment', 'FeeAssignment']),
+                fee_maturity: formatDate(getVal(['fee_maturity', 'FeeMaturity', 'contribution_due_date', 'ContributionDueDate'])),
+                fee_starts_at: formatDate(getVal(['fee_starts_at', 'FeeStartsAt'])),
+
+                // Contribution (Legacy fallback)
                 contribution_name: getVal(['contribution_name', 'ContributionName', 'fee_label', 'FeeLabel']),
                 contribution_type: getVal(['contribution_type', 'ContributionType', 'fee_type', 'FeeType']),
                 contribution_amount: getVal(['contribution_amount', 'ContributionAmount', 'fee_amount', 'FeeAmount'])?.toString(),
@@ -174,7 +216,11 @@ const loadMember = async () => {
                 account_holder: getVal(['account_holder', 'AccountHolder', 'bank_account_name_of_account_holder', 'BankAccountNameOfAccountHolder']),
                 sepa_mandate_granted: getVal(['sepa_mandate_granted', 'SepaMandateGranted', 'bank_account_sepa_mandate_available', 'BankAccountSepaMandateAvailable']),
                 mandate_reference: getVal(['mandate_reference', 'MandateReference', 'bank_account_mandate_reference', 'BankAccountMandateReference']),
-                mandate_granted_at: formatDate(getVal(['mandate_granted_at', 'MandateGrantedAt'])),
+                mandate_type: getVal(['mandate_type', 'MandateType', 'bank_account_mandate_type', 'BankAccountMandateType']) || 'basic',
+                mandate_kind: getVal(['mandate_kind', 'MandateKind', 'bank_account_kind_of_sepa_mandate', 'BankAccountKindOfSepaMandate']) || 'recurrent',
+                mandate_granted_at: formatDate(getVal(['mandate_granted_at', 'MandateGrantedAt', 'bank_account_sepa_mandate_issued_on'])),
+                mandate_valid_until: formatDate(getVal(['mandate_valid_until', 'MandateValidUntil', 'bank_account_sepa_mandate_valid_until'])),
+                bank_account_id: getVal(['bank_account_id', 'BankAccountId']),
                 
                 notes: getVal(['notes', 'note', 'Note', 'Notes'])
             };
@@ -185,14 +231,13 @@ const loadMember = async () => {
             mappedMember.salutation = mapSalutation(mappedMember.salutation);
             mappedMember.marital_status = mapMaritalStatus(mappedMember.marital_status);
             
-            // Map boolean/string SEPA status to "Ja"/"Nein" for UI
+            // Map boolean/string SEPA status to Boolean for UI
             const sepaVal = mappedMember.sepa_mandate_granted;
             if (sepaVal === true || sepaVal === 'true' || sepaVal === '1' || String(sepaVal).toLowerCase() === 'ja') {
-                mappedMember.sepa_mandate_granted = 'Ja';
-            } else if (sepaVal === false || sepaVal === 'false' || sepaVal === '0' || String(sepaVal).toLowerCase() === 'nein') {
-                mappedMember.sepa_mandate_granted = 'Nein';
+                mappedMember.sepa_mandate_granted = true;
             } else {
-                 mappedMember.sepa_mandate_granted = sepaVal ? String(sepaVal) : '';
+                // Default to false unless clearly true
+                mappedMember.sepa_mandate_granted = false;
             }
 
             // Clean undefined values
@@ -271,6 +316,18 @@ const mapMaritalStatus = (val: string | undefined | any): string => {
     return v;
 };
 
+// Auto-fill SEPA fields logic could be here
+watch(() => member.value.mandate_granted_at, (newVal) => {
+    if (newVal && !member.value.mandate_valid_until) {
+         // Default to +3 years
+         try {
+             const d = new Date(newVal);
+             d.setFullYear(d.getFullYear() + 3);
+             member.value.mandate_valid_until = d.toISOString().split('T')[0];
+         } catch (e) { /* ignore invalid date */ }
+    }
+});
+
 const saveMember = async () => {
     loading.value = true;
     validationError.value = '';
@@ -285,6 +342,15 @@ const saveMember = async () => {
         // Scroll to top to see error
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
+    }
+
+    // Ensure mandate_valid_until is set if SEPA is active
+    if (member.value.sepa_mandate_granted && member.value.mandate_granted_at && !member.value.mandate_valid_until) {
+         try {
+             const d = new Date(member.value.mandate_granted_at);
+             d.setFullYear(d.getFullYear() + 3);
+             member.value.mandate_valid_until = d.toISOString().split('T')[0];
+         } catch(e) {}
     }
 
     try {
@@ -416,26 +482,33 @@ const saveMember = async () => {
                         <InputText id="left_at" v-model="member.left_at" type="date" />
                     </div>
                 </div>
-                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+                 
+                 <h3 class="text-lg font-bold mt-4 mb-2">Beitragsinformationen</h3>
+                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-2">
                     <div class="field md:col-span-2">
-                        <label for="contribution_name" class="font-bold block mb-2">Beitragsgruppe</label>
-                        <InputText id="contribution_name" v-model="member.contribution_name" />
+                        <label for="fee_label" class="font-bold block mb-2">Beitragsbezeichnung</label>
+                        <InputText id="fee_label" v-model="member.fee_label" placeholder="z.B. Standard" />
                     </div>
                     <div class="field">
-                        <label for="contribution_type" class="font-bold block mb-2">Art</label>
-                        <InputText id="contribution_type" v-model="member.contribution_type" />
+                        <label for="fee_assignment" class="font-bold block mb-2">Zuordnung</label>
+                        <InputText id="fee_assignment" v-model="member.fee_assignment" placeholder="z.B. 1_ideel" />
                     </div>
+                    
                      <div class="field">
-                        <label for="contribution_amount" class="font-bold block mb-2">Betrag</label>
-                        <InputText id="contribution_amount" v-model="member.contribution_amount" />
+                        <label for="fee_amount" class="font-bold block mb-2">Betrag</label>
+                        <InputText id="fee_amount" v-model.number="member.fee_amount" type="number" step="0.01" />
                     </div>
                     <div class="field">
-                        <label for="contribution_period" class="font-bold block mb-2">Zeitraum</label>
-                        <InputText id="contribution_period" v-model="member.contribution_period" />
+                        <label for="fee_period" class="font-bold block mb-2">Zeitraum</label>
+                        <Select id="fee_period" v-model="member.fee_period" :options="feePeriodOptions" optionLabel="label" optionValue="value" />
                     </div>
                     <div class="field">
-                        <label for="contribution_due_date" class="font-bold block mb-2">Fälligkeit</label>
-                        <InputText id="contribution_due_date" v-model="member.contribution_due_date" type="date"/>
+                        <label for="fee_maturity" class="font-bold block mb-2">Fälligkeit</label>
+                        <InputText id="fee_maturity" v-model="member.fee_maturity" type="date"/>
+                    </div>
+                    <div class="field">
+                        <label for="fee_starts_at" class="font-bold block mb-2">Gültig ab</label>
+                        <InputText id="fee_starts_at" v-model="member.fee_starts_at" type="date"/>
                     </div>
                  </div>
             </Panel>
@@ -445,7 +518,7 @@ const saveMember = async () => {
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="field">
                         <label for="payment_method" class="font-bold block mb-2">Zahlungsart</label>
-                        <InputText id="payment_method" v-model="member.payment_method" />
+                        <Select id="payment_method" v-model="member.payment_method" :options="paymentMethodOptions" optionLabel="label" optionValue="value" />
                     </div>
                     <div class="field">
                         <label for="account_holder" class="font-bold block mb-2">Kontoinhaber</label>
@@ -456,17 +529,29 @@ const saveMember = async () => {
                         <InputText id="iban" v-model="member.iban" />
                     </div>
                     
-                    <div class="field">
-                        <label for="sepa_mandate_granted" class="font-bold block mb-2">SEPA Mandate erteilt</label>
-                         <InputText id="sepa_mandate_granted" v-model="member.sepa_mandate_granted" />
+                    <div class="field flex items-center gap-2 mt-8">
+                         <Checkbox id="sepa_mandate_granted" v-model="member.sepa_mandate_granted" binary />
+                         <label for="sepa_mandate_granted" class="font-bold">SEPA Mandat erteilt</label>
                     </div>
                     <div class="field">
                         <label for="mandate_reference" class="font-bold block mb-2">Mandatsreferenz</label>
                         <InputText id="mandate_reference" v-model="member.mandate_reference" />
                     </div>
                     <div class="field">
+                        <label for="mandate_type" class="font-bold block mb-2">Mandatstyp</label>
+                        <Select id="mandate_type" v-model="member.mandate_type" :options="mandateTypeOptions" optionLabel="label" optionValue="value" />
+                    </div>
+                     <div class="field">
+                        <label for="mandate_kind" class="font-bold block mb-2">Art des Mandats</label>
+                        <Select id="mandate_kind" v-model="member.mandate_kind" :options="mandateKindOptions" optionLabel="label" optionValue="value" />
+                    </div>
+                    <div class="field">
                         <label for="mandate_granted_at" class="font-bold block mb-2">Mandatsdatum</label>
                         <InputText id="mandate_granted_at" v-model="member.mandate_granted_at" type="date" />
+                    </div>
+                    <div class="field">
+                        <label for="mandate_valid_until" class="font-bold block mb-2">Gültig bis</label>
+                        <InputText id="mandate_valid_until" v-model="member.mandate_valid_until" type="date" />
                     </div>
                 </div>
             </Panel>
