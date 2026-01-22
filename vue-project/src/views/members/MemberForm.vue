@@ -2,7 +2,7 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { api } from '@/services/api';
-import type { Member } from '@/types';
+import type { Member, BankAccount } from '@/types';
 import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
 import Textarea from 'primevue/textarea';
@@ -17,6 +17,14 @@ const router = useRouter();
 const isEdit = computed(() => route.params.id !== undefined && route.params.id !== '');
 const loading = ref(false);
 const validationError = ref('');
+const bankAccounts = ref<BankAccount[]>([]);
+
+const feeAssignmentOptions = computed(() => {
+    return bankAccounts.value.map(b => ({
+        label: `${b.name} (${b.iban})`,
+        value: b.id
+    }));
+});
 
 const member = ref<Member>({
     member_number: '',
@@ -256,7 +264,12 @@ const loadMember = async () => {
     }
 };
 
-onMounted(() => {
+onMounted(async () => {
+    try {
+        bankAccounts.value = await api.getBankAccounts();
+    } catch (e) {
+        console.error('Failed to load bank accounts', e);
+    }
     loadMember();
 });
 
@@ -491,7 +504,17 @@ const saveMember = async () => {
                     </div>
                     <div class="field">
                         <label for="fee_assignment" class="font-bold block mb-2">Zuordnung</label>
-                        <InputText id="fee_assignment" v-model="member.fee_assignment" placeholder="z.B. 1_ideel" />
+                        <!-- Editable Select allows custom values (legacy) or picking a Bank Account -->
+                        <Select 
+                            id="fee_assignment" 
+                            v-model="member.fee_assignment" 
+                            :options="feeAssignmentOptions" 
+                            optionLabel="label" 
+                            optionValue="value" 
+                            editable 
+                            placeholder="Wählen oder eingeben" 
+                            class="w-full"
+                        />
                     </div>
                     
                      <div class="field">
