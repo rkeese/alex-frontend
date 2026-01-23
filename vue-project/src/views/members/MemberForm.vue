@@ -20,7 +20,7 @@ const loading = ref(false);
 const validationError = ref('');
 const bankAccounts = ref<BankAccount[]>([]);
 
-const feeAssignmentOptions = computed(() => {
+const bankAccountOptions = computed(() => {
     return bankAccounts.value.map(b => ({
         label: `${b.name} (${b.iban})`,
         value: b.id
@@ -60,6 +60,7 @@ const member = ref<Member>({
     fee_period: 'yearly',
     fee_label: '',
     fee_assignment: '1_ideel',
+    creditor_account_id: '',
     fee_maturity: '',
     fee_starts_at: new Date().toISOString().split('T')[0],
     
@@ -85,6 +86,13 @@ const member = ref<Member>({
     
     notes: ''
 });
+
+const bookingAccountOptions = [
+    { label: 'Ideeller Bereich', value: '1_ideel' },
+    { label: 'Vermögensverwaltung', value: '2_vermoegen' },
+    { label: 'Zweckbetrieb', value: '3_zweckbetrieb' },
+    { label: 'Wirtschaftl. Geschäftsbetrieb', value: '4_wirtschaft' }
+];
 
 const feePeriodOptions = [
     { label: 'monatlich', value: 'monthly' },
@@ -209,6 +217,7 @@ const loadMember = async () => {
                 fee_period: getVal(['fee_period', 'FeePeriod', 'contribution_period', 'ContributionPeriod']),
                 fee_label: getVal(['fee_label', 'FeeLabel', 'contribution_name', 'ContributionName']),
                 fee_assignment: getVal(['fee_assignment', 'FeeAssignment']),
+                creditor_account_id: getVal(['creditor_account_id', 'CreditorAccountId', 'bank_account_id', 'BankAccountId']), // Map legacy bank_account_id to creditor_account_id
                 fee_maturity: formatDate(getVal(['fee_maturity', 'FeeMaturity', 'contribution_due_date', 'ContributionDueDate'])),
                 fee_starts_at: formatDate(getVal(['fee_starts_at', 'FeeStartsAt'])),
 
@@ -504,16 +513,26 @@ const saveMember = async () => {
                         <InputText id="fee_label" v-model="member.fee_label" placeholder="z.B. Standard" />
                     </div>
                     <div class="field md:col-span-4">
-                        <label for="fee_assignment" class="font-bold block mb-2">Vereinskonto für Lastschrift</label>
-                        <!-- Editable Select allows custom values (legacy) or picking a Bank Account -->
+                        <label for="creditor_account_id" class="font-bold block mb-2">Vereinskonto für Lastschrift</label>
+                        <Select 
+                            id="creditor_account_id" 
+                            v-model="member.creditor_account_id" 
+                            :options="bankAccountOptions" 
+                            optionLabel="label" 
+                            optionValue="value" 
+                            placeholder="Wählen" 
+                            class="w-full"
+                        />
+                    </div>
+                     <div class="field md:col-span-4">
+                        <label for="fee_assignment" class="font-bold block mb-2">Beitragsbuchungskonto</label>
                         <Select 
                             id="fee_assignment" 
                             v-model="member.fee_assignment" 
-                            :options="feeAssignmentOptions" 
+                            :options="bookingAccountOptions" 
                             optionLabel="label" 
                             optionValue="value" 
-                            editable 
-                            placeholder="Wählen oder eingeben" 
+                            placeholder="Wählen" 
                             class="w-full"
                         />
                     </div>

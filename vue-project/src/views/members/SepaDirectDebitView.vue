@@ -16,7 +16,11 @@ const loading = ref(false);
 const showPreview = ref(false);
 
 const formatDate = (date: Date) => {
-    return date.toISOString().split('T')[0];
+    // Manual local date formatting to avoid UTC time zone shifts
+    const d = new Date(date);
+    const offset = d.getTimezoneOffset() * 60000;
+    const localISOTime = (new Date(d.getTime() - offset)).toISOString().slice(0, 10);
+    return localISOTime;
 };
 
 const formatCurrency = (value: number) => {

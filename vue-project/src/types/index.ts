@@ -70,7 +70,8 @@ export interface Member {
     fee_amount?: number;
     fee_period?: string; // 'monthly', 'quarterly', 'half_yearly', 'yearly'
     fee_label?: string;
-    fee_assignment?: string;
+    fee_assignment?: string; // e.g. '1_ideel'
+    creditor_account_id?: string; // Club Bank Account UUID
     fee_maturity?: string; // YYYY-MM-DD
     fee_starts_at?: string; // YYYY-MM-DD
 
