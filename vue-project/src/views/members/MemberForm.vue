@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { api } from '@/services/api';
 import type { Member, BankAccount } from '@/types';
 import InputText from 'primevue/inputtext';
+import InputNumber from 'primevue/inputnumber';
 import Select from 'primevue/select';
 import Textarea from 'primevue/textarea';
 import Checkbox from 'primevue/checkbox';
@@ -497,13 +498,13 @@ const saveMember = async () => {
                 </div>
                  
                  <h3 class="text-lg font-bold mt-4 mb-2">Beitragsinformationen</h3>
-                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-2">
-                    <div class="field md:col-span-2">
+                 <div class="grid grid-cols-1 md:grid-cols-12 gap-4 mt-2">
+                    <div class="field md:col-span-6">
                         <label for="fee_label" class="font-bold block mb-2">Beitragsbezeichnung</label>
                         <InputText id="fee_label" v-model="member.fee_label" placeholder="z.B. Standard" />
                     </div>
-                    <div class="field">
-                        <label for="fee_assignment" class="font-bold block mb-2">Zuordnung</label>
+                    <div class="field md:col-span-4">
+                        <label for="fee_assignment" class="font-bold block mb-2">Vereinskonto für Lastschrift</label>
                         <!-- Editable Select allows custom values (legacy) or picking a Bank Account -->
                         <Select 
                             id="fee_assignment" 
@@ -517,19 +518,19 @@ const saveMember = async () => {
                         />
                     </div>
                     
-                     <div class="field">
+                     <div class="field md:col-span-2">
                         <label for="fee_amount" class="font-bold block mb-2">Betrag</label>
-                        <InputText id="fee_amount" v-model.number="member.fee_amount" type="number" step="0.01" />
+                        <InputNumber id="fee_amount" v-model="member.fee_amount" mode="currency" currency="EUR" locale="de-DE" />
                     </div>
-                    <div class="field">
+                    <div class="field md:col-span-4">
                         <label for="fee_period" class="font-bold block mb-2">Zeitraum</label>
                         <Select id="fee_period" v-model="member.fee_period" :options="feePeriodOptions" optionLabel="label" optionValue="value" />
                     </div>
-                    <div class="field">
+                    <div class="field md:col-span-4">
                         <label for="fee_maturity" class="font-bold block mb-2">Fälligkeit</label>
                         <InputText id="fee_maturity" v-model="member.fee_maturity" type="date"/>
                     </div>
-                    <div class="field">
+                    <div class="field md:col-span-4">
                         <label for="fee_starts_at" class="font-bold block mb-2">Gültig ab</label>
                         <InputText id="fee_starts_at" v-model="member.fee_starts_at" type="date"/>
                     </div>

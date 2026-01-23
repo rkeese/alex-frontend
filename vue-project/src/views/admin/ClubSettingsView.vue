@@ -302,23 +302,23 @@ onMounted(() => {
         <Dialog v-model:visible="bankAccountDialog" :header="isNewBankAccount ? 'Neues Bankkonto' : 'Bankkonto bearbeiten'" :modal="true" :style="{ width: '500px' }" class="p-fluid">
             <div class="field mb-4">
                 <label for="accName" class="font-bold block mb-2">Bezeichnung (z.B. Hauptkonto)</label>
-                <InputText id="accName" v-model="bankAccount.name" required autofocus />
+                <InputText id="accName" v-model="bankAccount.name" required autofocus class="w-full" />
             </div>
             <div class="field mb-4">
                 <label for="accHolder" class="font-bold block mb-2">Kontoinhaber</label>
-                <InputText id="accHolder" v-model="bankAccount.account_holder" />
+                <InputText id="accHolder" v-model="bankAccount.account_holder" class="w-full" />
             </div>
             <div class="field mb-4">
                 <label for="accCreditor" class="font-bold block mb-2">Gläubiger-ID</label>
-                <InputText id="accCreditor" v-model="bankAccount.creditor_id" />
+                <InputText id="accCreditor" v-model="bankAccount.creditor_id" class="w-full" />
             </div>
              <div class="field mb-4">
                 <label for="accIban" class="font-bold block mb-2">IBAN</label>
-                <InputText id="accIban" v-model="bankAccount.iban" />
+                <InputText id="accIban" v-model="bankAccount.iban" class="w-full" />
             </div>
              <div class="field mb-4">
                 <label for="accBic" class="font-bold block mb-2">BIC</label>
-                <InputText id="accBic" v-model="bankAccount.bic" />
+                <InputText id="accBic" v-model="bankAccount.bic" class="w-full" />
             </div>
             <div class="field-checkbox flex align-items-center mb-4">
                 <Checkbox id="accDefault" v-model="bankAccount.is_default" :binary="true" />
