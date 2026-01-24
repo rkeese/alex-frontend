@@ -193,6 +193,27 @@ class ApiClient {
         });
     }
 
+    async exportMembers(): Promise<void> {
+        const response = await fetch(`${BASE_URL}/members/export`, {
+            method: 'GET',
+            headers: this.getHeaders(),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Export failed: ${response.statusText}`);
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'members.csv';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+    }
+
     async getMemberStatistics(year: number): Promise<import('../types').MemberStatistics[]> {
         return this.request<import('../types').MemberStatistics[]>(`/members/statistics?year=${year}`, {
             headers: this.getHeaders(),

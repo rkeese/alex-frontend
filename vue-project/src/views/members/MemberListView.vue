@@ -97,6 +97,15 @@ const inviteMember = async (member: any) => {
         }
     }
 };
+
+const exportMembers = async () => {
+    try {
+        await api.exportMembers();
+    } catch (error) {
+        console.error('Failed to export members', error);
+        alert('Export fehlgeschlagen');
+    }
+};
 </script>
 
 <template>
@@ -104,6 +113,7 @@ const inviteMember = async (member: any) => {
         <div class="flex justify-between items-center mb-4">
             <h1 class="text-2xl font-bold text-gray-800">Mitglieder</h1>
             <div class="flex gap-2">
+                <Button v-if="authStore.hasPermission('members:read')" label="Exportieren" icon="pi pi-download" severity="secondary" @click="exportMembers" />
                 <Button v-if="authStore.hasPermission('members:write')" label="Importieren" icon="pi pi-upload" severity="secondary" @click="router.push('/members/import')" />
                 <Button v-if="authStore.hasPermission('members:write')" label="Neues Mitglied" icon="pi pi-plus" @click="router.push('/members/create')" />
             </div>
