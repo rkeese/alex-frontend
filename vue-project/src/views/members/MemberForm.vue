@@ -21,7 +21,8 @@ const validationError = ref('');
 const bankAccounts = ref<BankAccount[]>([]);
 
 const bankAccountOptions = computed(() => {
-    return bankAccounts.value.map(b => ({
+    const accounts = Array.isArray(bankAccounts.value) ? bankAccounts.value : [];
+    return accounts.map(b => ({
         label: `${b.name} (${b.iban})`,
         value: b.id
     }));
@@ -266,8 +267,9 @@ const loadMember = async () => {
             console.log('Mapped member data:', cleanMapped); 
             member.value = { ...member.value, ...cleanMapped };
             // --- END RESTORED MAPPING ---
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to load member', error);
+            validationError.value = 'Fehler beim Laden des Mitglieds: ' + (error.message || 'Unbekannter Fehler');
         } finally {
             loading.value = false;
         }
@@ -276,9 +278,11 @@ const loadMember = async () => {
 
 onMounted(async () => {
     try {
-        bankAccounts.value = await api.getBankAccounts();
+        const accounts = await api.getBankAccounts();
+        bankAccounts.value = Array.isArray(accounts) ? accounts : [];
     } catch (e) {
         console.error('Failed to load bank accounts', e);
+        bankAccounts.value = [];
     }
     loadMember();
 });
