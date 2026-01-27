@@ -62,6 +62,7 @@ const member = ref<Member>({
     fee_label: '',
     fee_assignment: '1_ideel',
     creditor_account_id: '',
+    assigned_club_bank_id: '',
     fee_maturity: '',
     fee_starts_at: new Date().toISOString().split('T')[0],
     
@@ -218,6 +219,7 @@ const loadMember = async () => {
                 fee_period: getVal(['fee_period', 'FeePeriod', 'contribution_period', 'ContributionPeriod']),
                 fee_label: getVal(['fee_label', 'FeeLabel', 'contribution_name', 'ContributionName']),
                 fee_assignment: getVal(['fee_assignment', 'FeeAssignment']),
+                assigned_club_bank_id: getVal(['assigned_club_bank_id', 'AssignedClubBankId']),
                 creditor_account_id: getVal(['creditor_account_id', 'CreditorAccountId', 'bank_account_id', 'BankAccountId']), // Map legacy bank_account_id to creditor_account_id
                 fee_maturity: formatDate(getVal(['fee_maturity', 'FeeMaturity', 'contribution_due_date', 'ContributionDueDate'])),
                 fee_starts_at: formatDate(getVal(['fee_starts_at', 'FeeStartsAt'])),
@@ -517,10 +519,10 @@ const saveMember = async () => {
                         <InputText id="fee_label" v-model="member.fee_label" placeholder="z.B. Standard" />
                     </div>
                     <div class="field md:col-span-4">
-                        <label for="creditor_account_id" class="font-bold block mb-2">Vereinskonto für Lastschrift</label>
+                        <label for="assigned_club_bank_id" class="font-bold block mb-2">Vereinskonto für Lastschrift</label>
                         <Select 
-                            id="creditor_account_id" 
-                            v-model="member.creditor_account_id" 
+                            id="assigned_club_bank_id" 
+                            v-model="member.assigned_club_bank_id" 
                             :options="bankAccountOptions" 
                             optionLabel="label" 
                             optionValue="value" 

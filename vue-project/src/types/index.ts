@@ -71,7 +71,8 @@ export interface Member {
     fee_period?: string; // 'monthly', 'quarterly', 'half_yearly', 'yearly'
     fee_label?: string;
     fee_assignment?: string; // e.g. '1_ideel'
-    creditor_account_id?: string; // Club Bank Account UUID
+    creditor_account_id?: string; // Club Bank Account UUID (Fee Override)
+    assigned_club_bank_id?: string; // Default Club Bank Account (Member Level)
     fee_maturity?: string; // YYYY-MM-DD
     fee_starts_at?: string; // YYYY-MM-DD
 
@@ -131,6 +132,7 @@ export interface SepaMember {
     sequence_type: string;
     target_account_holder: string;
     target_iban: string;
+    target_bank_name?: string;
 }
 
 export interface BankAccount {

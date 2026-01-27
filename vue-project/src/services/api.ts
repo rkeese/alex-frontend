@@ -446,6 +446,12 @@ class ApiClient {
         });
     }
 
+    async getClubBanks(clubId: string): Promise<BankAccount[]> {
+        return this.request<BankAccount[]>(`/clubs/${clubId}/banks`, {
+            headers: this.getHeaders(false),
+        });
+    }
+
     async createBankAccount(account: BankAccount): Promise<BankAccount> {
         return this.request<BankAccount>('/finance/bank-accounts', {
             method: 'POST',
