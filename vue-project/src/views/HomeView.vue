@@ -1,13 +1,59 @@
 <script setup lang="ts">
+import { ref, onMounted, watch } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
 import Card from 'primevue/card';
 import Button from 'primevue/button';
+import { api } from '@/services/api';
 
 const authStore = useAuthStore();
 const router = useRouter();
 const { clubId } = storeToRefs(authStore);
+
+const memberCount = ref<number | null>(null);
+const upcomingEventsCount = ref<number | null>(null);
+const nextEventDisplay = ref<string>('None');
+
+const fetchDashboardData = async () => {
+  if (!clubId.value) {
+    memberCount.value = null;
+    upcomingEventsCount.value = null;
+    nextEventDisplay.value = 'None';
+    return;
+  }
+  try {
+    const [members, events] = await Promise.all([
+      api.getMembers(),
+      api.getEvents()
+    ]);
+    
+    memberCount.value = members.length;
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const upcoming = events
+      .filter(e => e.date >= todayStr)
+      .sort((a, b) => a.date.localeCompare(b.date));
+    
+    upcomingEventsCount.value = upcoming.length;
+    if (upcoming.length > 0) {
+        nextEventDisplay.value = `${upcoming[0].date}: ${upcoming[0].description}`;
+    } else {
+        nextEventDisplay.value = 'None';
+    }
+
+  } catch (e) {
+    console.error('Failed to fetch dashboard data', e);
+  }
+};
+
+onMounted(() => {
+  fetchDashboardData();
+});
+
+watch(clubId, () => {
+  fetchDashboardData();
+});
 </script>
 
 <template>
@@ -51,7 +97,7 @@ const { clubId } = storeToRefs(authStore);
         <div class="flex justify-between items-start mb-4">
           <div>
             <div class="text-surface-500 dark:text-surface-400 font-medium text-sm">Total Members</div>
-            <div class="text-2xl font-bold text-surface-900 dark:text-surface-0 mt-1">--</div>
+            <div class="text-2xl font-bold text-surface-900 dark:text-surface-0 mt-1">{{ memberCount !== null ? memberCount : '--' }}</div>
           </div>
           <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center">
             <i class="pi pi-users text-xl"></i>
@@ -83,14 +129,14 @@ const { clubId } = storeToRefs(authStore);
         <div class="flex justify-between items-start mb-4">
           <div>
             <div class="text-surface-500 dark:text-surface-400 font-medium text-sm">Upcoming Events</div>
-            <div class="text-2xl font-bold text-surface-900 dark:text-surface-0 mt-1">0</div>
+            <div class="text-2xl font-bold text-surface-900 dark:text-surface-0 mt-1">{{ upcomingEventsCount !== null ? upcomingEventsCount : '0' }}</div>
           </div>
           <div class="w-10 h-10 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center">
             <i class="pi pi-calendar text-xl"></i>
           </div>
         </div>
-        <div class="text-sm text-surface-500">
-          Next event: <span class="font-medium">None</span>
+        <div class="text-sm text-surface-500 truncate" :title="nextEventDisplay !== 'None' ? nextEventDisplay : ''">
+          Next event: <span class="font-medium">{{ nextEventDisplay }}</span>
         </div>
       </div>
     </div>
