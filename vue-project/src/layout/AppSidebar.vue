@@ -31,9 +31,9 @@ const items = computed(() => {
         } as any);
     }
 
-    if (authStore.hasPermission('departments:read') || authStore.hasPermission('departments:write')) {
-        menuItems.push({ label: 'Abteilungen', icon: 'pi pi-sitemap', command: () => router.push('/departments') });
-    }
+    // if (authStore.hasPermission('departments:read') || authStore.hasPermission('departments:write')) {
+    //     menuItems.push({ label: 'Abteilungen', icon: 'pi pi-sitemap', command: () => router.push('/departments') });
+    // }
 
     if (authStore.hasPermission('finance:read') || authStore.hasPermission('finance:write')) {
         menuItems.push({
