@@ -550,6 +550,21 @@ class ApiClient {
         });
     }
 
+    async exportEventsPdf(year: number, month?: number): Promise<Blob> {
+        const params = new URLSearchParams();
+        params.append('year', year.toString());
+        if (month) {
+            params.append('month', month.toString());
+        }
+
+        const response = await fetch(`${BASE_URL}/calendar/events/pdf?${params.toString()}`, {
+            headers: this.getHeaders(),
+        });
+        
+        if (!response.ok) throw new Error('Download failed');
+        return response.blob();
+    }
+
     // Documents
     async getDocuments(): Promise<Document[]> {
         return this.request<Document[]>('/documents', {

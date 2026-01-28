@@ -7,6 +7,7 @@ import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
 import SelectButton from 'primevue/selectbutton';
+import Menu from 'primevue/menu';
 
 const viewMode = ref<'month' | 'day'>('month'); // 'month' or 'day'
 const viewOptions = ref([
@@ -18,6 +19,45 @@ const currentDate = ref(new Date());
 const selectedDate = ref(new Date()); // For day view or creating event
 const events = ref<CalendarEvent[]>([]);
 const loading = ref(false);
+
+// Export
+const menu = ref();
+const exportItems = ref([
+    {
+        label: 'Aktueller Monat',
+        icon: 'pi pi-file-pdf',
+        command: () => exportPdf('month')
+    },
+    {
+        label: 'Aktuelles Jahr',
+        icon: 'pi pi-file-pdf',
+        command: () => exportPdf('year')
+    }
+]);
+
+const exportPdf = async (scope: 'month' | 'year') => {
+    try {
+        const year = currentDate.value.getFullYear();
+        const month = scope === 'month' ? currentDate.value.getMonth() + 1 : undefined; // +1 because getMonth is 0-indexed
+        
+        const blob = await api.exportEventsPdf(year, month);
+        
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const filename = scope === 'month' 
+            ? `events_${year}_${month}.pdf` 
+            : `events_${year}.pdf`;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    } catch (e) {
+        console.error("Export failed", e);
+        alert('Export fehlgeschlagen');
+    }
+};
 
 // Event Dialog
 const showDialog = ref(false);
@@ -219,6 +259,8 @@ const selectDay = (dateStr: string) => {
             
             <div class="flex items-center gap-2">
                  <SelectButton v-model="viewMode" :options="viewOptions" optionLabel="label" optionValue="value" :allowEmpty="false" />
+                 <Button icon="pi pi-download" label="Export" @click="(event) => menu.toggle(event)" aria-haspopup="true" aria-controls="overlay_menu" severity="secondary" />
+                 <Menu ref="menu" id="overlay_menu" :model="exportItems" :popup="true" />
                  <Button icon="pi pi-plus" label="Termin" @click="openAddDialog" />
             </div>
         </div>
