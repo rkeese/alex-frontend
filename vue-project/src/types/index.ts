@@ -151,9 +151,12 @@ export interface SepaXmlRequest {
 
 export interface CalendarEvent {
     id?: string;
+    club_id?: string;
     date: string; // YYYY-MM-DD
     time: string; // HH:MM
     description: string;
+    created_at?: string;
+    updated_at?: string;
 }
 
 export interface Document {

@@ -13,6 +13,7 @@ import MemberImportView from '../views/members/MemberImportView.vue'
 import SepaDirectDebitView from '../views/members/SepaDirectDebitView.vue'
 import UserManagementView from '../views/admin/UserManagementView.vue'
 import ClubSettingsView from '../views/admin/ClubSettingsView.vue'
+import CalendarView from '../views/CalendarView.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({
@@ -38,6 +39,12 @@ const router = createRouter({
           path: '',
           name: 'home',
           component: HomeView,
+        },
+        {
+          path: 'calendar',
+          name: 'calendar',
+          component: CalendarView,
+          meta: { permission: 'calendar:read' }
         },
         {
           path: 'members',
@@ -105,12 +112,7 @@ const router = createRouter({
           component: PlaceholderView,
           meta: { permission: 'finance:read' }
         },
-        {
-          path: 'calendar',
-          name: 'calendar',
-          component: PlaceholderView,
-          meta: { permission: 'calendar:read' }
-        },
+
         {
           path: 'documents',
           name: 'documents',

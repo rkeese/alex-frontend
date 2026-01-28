@@ -506,26 +506,41 @@ class ApiClient {
     }
 
     // Calendar
+    private normalizeEvent(event: any): CalendarEvent {
+        if (!event) return event;
+        // Handle weird Go pgtype.Time JSON format: { Microseconds: 64800000000, Valid: true }
+        if (event.time && typeof event.time === 'object' && 'Microseconds' in event.time) {
+            const seconds = Math.floor(event.time.Microseconds / 1000000);
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            event.time = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+        }
+        return event;
+    }
+
     async getEvents(): Promise<CalendarEvent[]> {
-        return this.request<CalendarEvent[]>('/calendar/events', {
+        const events = await this.request<any[]>('/calendar/events', {
             headers: this.getHeaders(),
         });
+        return events.map(e => this.normalizeEvent(e));
     }
 
     async createEvent(event: CalendarEvent): Promise<CalendarEvent> {
-        return this.request<CalendarEvent>('/calendar/events', {
+        const created = await this.request<any>('/calendar/events', {
             method: 'POST',
             headers: this.getHeaders(),
             body: JSON.stringify(event),
         });
+        return this.normalizeEvent(created);
     }
 
     async updateEvent(id: string, event: CalendarEvent): Promise<CalendarEvent> {
-        return this.request<CalendarEvent>(`/calendar/events/${id}`, {
+        const updated = await this.request<any>(`/calendar/events/${id}`, {
             method: 'PUT',
             headers: this.getHeaders(),
             body: JSON.stringify(event),
         });
+        return this.normalizeEvent(updated);
     }
 
     async deleteEvent(id: string): Promise<void> {
