@@ -176,6 +176,14 @@ class ApiClient {
         });
     }
 
+    async updateUser(id: string, data: any): Promise<void> {
+        return this.request<void>(`/users/${id}`, {
+            method: 'PUT',
+            headers: this.getHeaders(false),
+            body: JSON.stringify(data),
+        });
+    }
+
     async getRoles(): Promise<Role[]> {
         return this.request<Role[]>('/roles', {
             // Roles are global definitions

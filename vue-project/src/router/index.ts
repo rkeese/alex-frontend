@@ -32,6 +32,13 @@ const router = createRouter({
       meta: { public: true }
     },
     {
+      path: '/change-password',
+      name: 'change-password',
+      component: () => import('../views/ChangePasswordView.vue'),
+      // Not strictly public, but accessible when auth is partial (must change phase)
+      meta: { public: false, ignorePasswordCheck: true } 
+    },
+    {
       path: '/',
       component: AppLayout,
       children: [
@@ -149,13 +156,19 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
   const isPublic = to.matched.some(record => record.meta.public);
+  const ignorePasswordCheck = to.matched.some(record => record.meta.ignorePasswordCheck);
   const requiredPermission = to.meta.permission as string | undefined;
 
   if (!isPublic && !authStore.isAuthenticated) {
     return next({ name: 'login' });
   }
 
-  if (to.name === 'login' && authStore.isAuthenticated) {
+  // Password Change Check
+  if (authStore.isAuthenticated && authStore.mustChangePassword && !ignorePasswordCheck && to.name !== 'change-password') {
+    return next({ name: 'change-password' });
+  }
+
+  if (to.name === 'login' && authStore.isAuthenticated && !authStore.mustChangePassword) {
     return next({ name: 'home' });
   }
 

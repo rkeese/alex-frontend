@@ -2,6 +2,7 @@ import { ref, computed } from 'vue';
 import { defineStore } from 'pinia';
 import { api } from '@/services/api';
 import type { LoginRequest, RegisterRequest } from '@/types';
+import { jwtDecode } from "jwt-decode";
 
 export const useAuthStore = defineStore('auth', () => {
     const token = ref(localStorage.getItem('token') || '');
@@ -12,6 +13,8 @@ export const useAuthStore = defineStore('auth', () => {
     const isSystemAdmin = ref(false);
     const userEmail = ref<string>('');
     const userName = ref<string>('');
+    const mustChangePassword = ref(false);
+    const userId = ref<string>('');
     
     const isAuthenticated = computed(() => !!token.value);
     
@@ -28,12 +31,18 @@ export const useAuthStore = defineStore('auth', () => {
 
     function processToken(jwt: string) {
         try {
-            const payload = parseJwt(jwt);
+            const payload: any = jwtDecode(jwt);
             console.log('JWT Payload:', payload); // Debugging aid
             
-            // Extract email/sub
-            userEmail.value = payload.email || payload.sub || '';
+            // Extract IDs
+            userId.value = payload.sub || payload.id || '';
             
+            // Extract email
+            userEmail.value = payload.email || '';
+            
+            // Extract Must Change Password Flag
+            mustChangePassword.value = !!payload.must_change_password;
+
             // Extract Name
             if (payload.name) {
                 userName.value = payload.name;
@@ -238,7 +247,7 @@ export const useAuthStore = defineStore('auth', () => {
         localStorage.setItem('clubName', name);
     }
 
-    return { token, clubId, clubName, isAuthenticated, permissions, roles, isSystemAdmin, userEmail, userName, userRoleLabel, hasPermission, login, register, logout, setClub };
+    return { token, clubId, clubName, isAuthenticated, permissions, roles, isSystemAdmin, userEmail, userName, mustChangePassword, userId, userRoleLabel, hasPermission, login, register, logout, setClub };
 });
 
 function parseJwt (token: string) {
