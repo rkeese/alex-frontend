@@ -124,6 +124,12 @@ const router = createRouter({
           component: ClubSettingsView,
           meta: { permission: 'club:write' }
         },
+        {
+          path: 'admin/board',
+          name: 'board-members',
+          component: () => import('../views/admin/BoardMemberView.vue'),
+          meta: { permission: 'club:write' }
+        },
         {            path: 'admin/users',
             name: 'admin-users',
             component: UserManagementView,

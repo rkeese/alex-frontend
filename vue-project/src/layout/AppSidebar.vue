@@ -55,7 +55,14 @@ const items = computed(() => {
     }
 
     if (authStore.hasPermission('club:write')) {
-        menuItems.push({ label: 'Verein', icon: 'pi pi-building', command: () => router.push('/admin/club-settings') });
+        menuItems.push({ 
+            label: 'Verein', 
+            icon: 'pi pi-building', 
+            items: [
+                { label: 'Einstellungen', icon: 'pi pi-cog', command: () => router.push('/admin/club-settings') },
+                { label: 'Vorstand', icon: 'pi pi-id-card', command: () => router.push('/admin/board') }
+            ]
+        } as any);
     }
 
     if (authStore.hasPermission('users:manage') || authStore.hasPermission('clubs:manage')) {

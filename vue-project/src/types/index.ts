@@ -93,6 +93,35 @@ export interface Member {
     bank_account_id?: string;
 }
 
+export interface BoardMember {
+    id: string;
+    club_id: string;
+    member_id: string;
+    user_id: string;
+    position: string; // The backend response uses 'position'
+    first_name: string;
+    last_name: string;
+    member_number: string;
+    email: string;
+}
+
+export interface BoardMemberCreateRequest {
+    member_id: string;
+    task: string; // The backend payload uses 'task'
+    roles: string[];
+}
+
+export interface BoardMemberUpdateRequest {
+    task: string;
+    roles: string[];
+}
+
+export interface Role {
+    id: string;
+    name: string;
+    created_at: string;
+}
+
 export interface Department {
     id?: string;
     name: string;

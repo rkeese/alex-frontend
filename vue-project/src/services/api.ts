@@ -12,7 +12,11 @@ import type {
     SepaXmlRequest,
     CalendarEvent,
     Document,
-    ImportResponse
+    ImportResponse,
+    BoardMember,
+    BoardMemberCreateRequest,
+    BoardMemberUpdateRequest,
+    Role
 } from '../types';
 
 const BASE_URL = '/api/v1';
@@ -127,6 +131,36 @@ class ApiClient {
         });
     }
 
+    // Board Members
+    async getBoardMembers(clubId: string): Promise<BoardMember[]> {
+        return this.request<BoardMember[]>(`/clubs/${clubId}/board-members`, {
+            headers: this.getHeaders(true),
+        });
+    }
+
+    async addBoardMember(clubId: string, data: BoardMemberCreateRequest): Promise<BoardMember> {
+        return this.request<BoardMember>(`/clubs/${clubId}/board-members`, {
+            method: 'POST',
+            headers: this.getHeaders(true),
+            body: JSON.stringify(data),
+        });
+    }
+
+    async updateBoardMember(clubId: string, memberId: string, data: BoardMemberUpdateRequest): Promise<void> {
+        return this.request<void>(`/clubs/${clubId}/board-members/${memberId}`, {
+            method: 'PUT',
+            headers: this.getHeaders(true),
+            body: JSON.stringify(data),
+        });
+    }
+
+    async deleteBoardMember(clubId: string, memberId: string): Promise<void> {
+        return this.request<void>(`/clubs/${clubId}/board-members/${memberId}`, {
+            method: 'DELETE',
+            headers: this.getHeaders(true),
+        });
+    }
+
     // User Management / Admin
     // Note: 'getUsers' isn't explicitly in the provided API doc snippet, 
     // but essential for an admin view. Assuming endpoint /users exists or is needed.
@@ -142,8 +176,8 @@ class ApiClient {
         });
     }
 
-    async getRoles(): Promise<import('../types').Role[]> {
-        return this.request<import('../types').Role[]>('/roles', {
+    async getRoles(): Promise<Role[]> {
+        return this.request<Role[]>('/roles', {
             // Roles are global definitions
             headers: this.getHeaders(false),
         });
