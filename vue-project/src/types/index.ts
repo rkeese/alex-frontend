@@ -91,6 +91,9 @@ export interface Member {
     
     // Internal
     bank_account_id?: string;
+    
+    // Auth Link
+    user_id?: string;
 }
 
 export interface BoardMember {

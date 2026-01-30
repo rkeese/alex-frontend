@@ -27,47 +27,88 @@ const loadData = async () => {
     loading.value = true;
     error.value = null;
     try {
-        // Fetch global users list to ensure we see everyone
-        const globalUsersPromise = api.getUsers(false);
+        // Fetch global users list to ensure we see everyone (SysAdmin)
+        let usersData: User[] = [];
+        try {
+            usersData = await api.getUsers(false);
+        } catch (e) {
+            console.log('Not a SysAdmin, skipping global user fetch');
+        }
+
         const rolesPromise = api.getRoles();
         
         // Fetch club-specific users if we are in a club context to get their roles
-        let clubUsersPromise = Promise.resolve([] as User[]);
+        let clubUsersData: User[] = [];
         if (authStore.clubId) {
-             clubUsersPromise = api.getUsers(true).catch(e => {
-                 console.warn('Failed to fetch club users, ignoring', e);
-                 return [];
-             });
+             try {
+                 clubUsersData = await api.getUsers(true);
+             } catch(e) {
+                 console.log('Failed to fetch club users via /users endpoint, trying fallback via members and board');
+                 
+                 // FAILSAFE: If GET /users is strictly SysAdmin, use GET /members AND GET /board-members to find users
+                 try {
+                     const [members, boardMembers] = await Promise.all([
+                        api.getMembers().catch(() => []),
+                        api.getBoardMembers(authStore.clubId).catch(() => []) 
+                     ]);
+                     
+                     // Filter members who have a linked user account
+                     // Construct User objects from Member data
+                     const memberUsers = members
+                        .filter(m => m.user_id)
+                        .map(m => ({
+                            id: m.user_id!,
+                            email: m.email,
+                            // We don't have roles here yet, they will be fetched on demand or we accept empty
+                            roles: [] 
+                        }));
+
+                     // Construct User objects from BoardMember data
+                     // Board members almost certainly have user_id if they are active users
+                     const boardUsers = boardMembers
+                        .filter(bm => bm.user_id)
+                        .map(bm => ({
+                            id: bm.user_id,
+                            email: bm.email,
+                            roles: [] 
+                        }));
+
+                     // Merge Lists (Board Member Users might not be Regular Members or vice versa, or overlaps)
+                     const combinedMap = new Map();
+                     [...memberUsers, ...boardUsers].forEach(u => combinedMap.set(u.id, u));
+                     clubUsersData = Array.from(combinedMap.values());
+
+                 } catch (memErr) {
+                     console.error('Failed to fetch members for user reconstruction', memErr);
+                 }
+             }
         }
 
-        const [usersData, rolesData, clubUsersData] = await Promise.all([
-            globalUsersPromise,
-            rolesPromise,
-            clubUsersPromise
+        const [rolesData] = await Promise.all([
+            rolesPromise
         ]);
         
-        // Merge club roles into global user list
-        // Create a map of club users for faster lookup
-        // Use lowercase ID map to avoid case sensitivity issues
-        const clubUsersMap = new Map((clubUsersData || []).map(u => [u.id.toLowerCase(), u]));
-
-        users.value = usersData.map(u => {
-            const clubUser = clubUsersMap.get(u.id.toLowerCase());
-            // MERGE Logic: prioritize club roles, but keep global user data
-            let mergedRoles: any[] = [];
-            
-            if (clubUser && clubUser.roles) {
-                mergedRoles = [...clubUser.roles];
-            } else if (u.roles) {
-                mergedRoles = [...u.roles];
+        // Merge lists
+        const userMap = new Map<string, User>();
+        
+        // Add global users first
+        usersData.forEach(u => userMap.set(u.id.toLowerCase(), { ...u, roles: u.roles || [] }));
+        
+        // Merge/Add club users
+        clubUsersData.forEach(u => {
+            const existing = userMap.get(u.id.toLowerCase());
+            if (existing) {
+                // If existing has no roles but club user does, use club user roles (if any)
+                // But usually club user fetch via /users returns roles. Member fetch does NOT.
+                if ((!existing.roles || existing.roles.length === 0) && u.roles && u.roles.length > 0) {
+                     existing.roles = u.roles;
+                }
+            } else {
+                userMap.set(u.id.toLowerCase(), { ...u, roles: u.roles || [] });
             }
-            
-            return {
-                ...u,
-                roles: mergedRoles
-            };
         });
 
+        users.value = Array.from(userMap.values());
         roles.value = rolesData;
     } catch (e: any) {
         console.error('Failed to load admin data', e);
