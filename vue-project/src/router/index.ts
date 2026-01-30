@@ -96,6 +96,18 @@ const router = createRouter({
           meta: { permission: 'members:read' }
         },
         {
+          path: 'finance/import',
+          name: 'finance-import',
+          component: () => import('../views/finance/BookingImportView.vue'),
+          meta: { permission: 'finance:write' }
+        },
+        {
+          path: 'finance/bookings',
+          name: 'finance-bookings',
+          component: () => import('../views/finance/BookingListView.vue'),
+          meta: { permission: 'finance:read' }
+        },
+        {
           path: 'members/:id/edit',
           name: 'members-edit',
           component: MemberForm,

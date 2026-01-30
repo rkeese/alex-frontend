@@ -1,4 +1,4 @@
-export interface LoginRequest {
+﻿export interface LoginRequest {
     email: string;
     password: string;
 }
@@ -244,4 +244,19 @@ export interface AnniversaryEntry {
     JoinedAt: string;
     AnniversaryDate: string;
     MembershipYears: number;
+}
+
+export interface BookingImportResponse {
+    message: string;
+}
+
+export interface Booking {
+    id: string;
+    booking_date: string;
+    amount: number;
+    currency: string;
+    applicant_name: string;
+    purpose: string;
+    external_iban?: string;
+    status: string;
 }

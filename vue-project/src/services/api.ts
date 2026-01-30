@@ -16,7 +16,9 @@ import type {
     BoardMember,
     BoardMemberCreateRequest,
     BoardMemberUpdateRequest,
-    Role
+    Role,
+    BookingImportResponse,
+    Booking
 } from '../types';
 
 const BASE_URL = '/api/v1';
@@ -43,38 +45,55 @@ class ApiClient {
     }
 
     private async request<T>(url: string, options: RequestInit = {}): Promise<T> {
-        const response = await fetch(`${BASE_URL}${url}`, options);
-        if (!response.ok) {
-            let errorMsg = response.statusText;
+        // Add a default timeout of 10 seconds to prevent hanging
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), 10000);
+        
+        try {
+            const response = await fetch(`${BASE_URL}${url}`, {
+                ...options,
+                signal: options.signal || controller.signal
+            });
+            clearTimeout(id);
+
+            if (!response.ok) {
+                let errorMsg = response.statusText;
+                try {
+                    const text = await response.text();
+                    // Try parsing JSON error response
+                    try {
+                        const json = JSON.parse(text);
+                        if (json.error) errorMsg = json.error;
+                        else if (json.message) errorMsg = json.message;
+                        else errorMsg = text;
+                    } catch {
+                        if (text) errorMsg = text;
+                    }
+                } catch (e) {
+                    // ignore parsing error
+                }
+                throw new Error(`${errorMsg} (${response.status})`);
+            }
+            if (response.status === 204) {
+                return {} as T;
+            }
+            
+            // Try to parse as JSON regardless of Content-Type header to be more robust
             try {
                 const text = await response.text();
-                // Try parsing JSON error response
-                try {
-                    const json = JSON.parse(text);
-                    if (json.error) errorMsg = json.error;
-                    else if (json.message) errorMsg = json.message;
-                    else errorMsg = text;
-                } catch {
-                    if (text) errorMsg = text;
-                }
+                if (!text) return {} as T;
+                return JSON.parse(text);
             } catch (e) {
-                // ignore parsing error
+                console.error('API Response Parsing Failed for url:', url);
+                // Re-read text is not possible, but we know it failed.
+                return {} as T;
             }
-            throw new Error(`${errorMsg} (${response.status})`);
-        }
-        if (response.status === 204) {
-            return {} as T;
-        }
-        
-        // Try to parse as JSON regardless of Content-Type header to be more robust
-        try {
-            const text = await response.text();
-            if (!text) return {} as T;
-            return JSON.parse(text);
-        } catch (e) {
-            console.error('API Response Parsing Failed for url:', url);
-            // Re-read text is not possible, but we know it failed.
-            return {} as T;
+        } catch (e: any) {
+            clearTimeout(id);
+            if (e.name === 'AbortError') {
+                throw new Error('Request timed out. The backend might be unresponsive.');
+            }
+            throw e;
         }
     }
 
@@ -545,6 +564,35 @@ class ApiClient {
         });
         if (!response.ok) throw new Error('Failed to generate PDF');
         return response.blob();
+    }
+
+    async importBookings(file: File): Promise<BookingImportResponse> {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const headers = this.getHeaders();
+        // @ts-ignore - Content-Type must be undefined for FormData to set boundary
+        delete headers['Content-Type'];
+
+        const response = await fetch(`${BASE_URL}/finance/import/bookings`, {
+            method: 'POST',
+            headers: headers,
+            body: formData,
+        });
+        
+        if (!response.ok) {
+            const text = await response.text();
+            throw new Error(text || 'Import failed');
+        }
+        return response.json();
+    }
+
+    async getBookings(): Promise<Booking[]> {
+        const result = await this.request<Booking[]>('/finance/bookings', {
+            headers: this.getHeaders(),
+        });
+        // Ensure we always return an array, even if the backend returns nothing/null/object
+        return Array.isArray(result) ? result : [];
     }
 
     // Calendar
