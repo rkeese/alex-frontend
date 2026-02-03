@@ -52,7 +52,11 @@ const loadMetadata = async () => {
 };
 
 const formatDateParam = (d: Date) => {
-    return d.toISOString().split('T')[0];
+    // Ensure we send local date components, not UTC
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
 };
 
 const fetchRealData = async () => {
@@ -68,8 +72,9 @@ const fetchRealData = async () => {
         const response = await api.getBookings(selectedBankAccountId.value, startDate, endDate);
         console.log('Real API Data:', response);
         
-        if (response && Array.isArray(response.bookings)) {
-            bookings.value = response.bookings;
+        // Robust handling: Check for response object and its properties
+        if (response) {
+            bookings.value = Array.isArray(response.bookings) ? response.bookings : [];
             startAmount.value = response.start_amount || 0;
             endAmount.value = response.end_amount || 0;
 
