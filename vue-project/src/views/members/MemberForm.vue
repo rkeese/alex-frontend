@@ -96,13 +96,6 @@ const bookingAccountOptions = [
     { label: 'Wirtschaftl. Geschäftsbetrieb', value: '4_wirtschaft' }
 ];
 
-const feePeriodOptions = [
-    { label: 'monatlich', value: 'monthly' },
-    { label: 'vierteljährlich', value: 'quarterly' },
-    { label: 'halbjährlich', value: 'half_yearly' },
-    { label: 'jährlich', value: 'yearly' }
-];
-
 const paymentMethodOptions = [
     { label: 'SEPA Lastschrift', value: 'sepa' },
     { label: 'Überweisung', value: 'transfer' },
@@ -382,6 +375,9 @@ const saveMember = async () => {
          } catch(e) {}
     }
 
+    // Force fixed fee period
+    member.value.fee_period = 'yearly';
+
     try {
         if (isEdit.value) {
             await api.updateMember(route.params.id as string, member.value);
@@ -511,8 +507,10 @@ const saveMember = async () => {
                         <InputText id="left_at" v-model="member.left_at" type="date" />
                     </div>
                 </div>
-                 
-                 <h3 class="text-lg font-bold mt-4 mb-2">Beitragsinformationen</h3>
+            </Panel>
+
+            <!-- Fees -->
+            <Panel header="Beitragsinformationen" toggleable class="mb-4">
                  <div class="grid grid-cols-1 md:grid-cols-12 gap-4 mt-2">
                     <div class="field md:col-span-6">
                         <label for="fee_label" class="font-bold block mb-2">Beitragsbezeichnung</label>
@@ -547,10 +545,7 @@ const saveMember = async () => {
                         <label for="fee_amount" class="font-bold block mb-2">Betrag</label>
                         <InputNumber id="fee_amount" v-model="member.fee_amount" mode="currency" currency="EUR" locale="de-DE" />
                     </div>
-                    <div class="field md:col-span-4">
-                        <label for="fee_period" class="font-bold block mb-2">Zeitraum</label>
-                        <Select id="fee_period" v-model="member.fee_period" :options="feePeriodOptions" optionLabel="label" optionValue="value" />
-                    </div>
+                    <!-- Zeitraum field removed as requested -->
                     <div class="field md:col-span-4">
                         <label for="fee_maturity" class="font-bold block mb-2">Fälligkeit</label>
                         <InputText id="fee_maturity" v-model="member.fee_maturity" type="date"/>
