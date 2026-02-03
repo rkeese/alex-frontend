@@ -175,6 +175,8 @@ export interface BankAccount {
     iban: string;
     bic: string;
     is_default: boolean;
+    initial_balance?: number;
+    initial_balance_date?: string; // YYYY-MM-DD
 }
 
 export interface SepaXmlRequest {

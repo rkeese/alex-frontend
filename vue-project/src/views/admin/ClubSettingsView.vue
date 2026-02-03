@@ -5,6 +5,8 @@ import type { Club, Department, BankAccount } from '@/types';
 import { useToast } from 'primevue/usetoast';
 
 import InputText from 'primevue/inputtext';
+import InputNumber from 'primevue/inputnumber';
+import Calendar from 'primevue/calendar';
 import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
 import TabView from 'primevue/tabview';
@@ -38,7 +40,9 @@ const bankAccount = ref<BankAccount>({
     creditor_id: '', 
     iban: '', 
     bic: '', 
-    is_default: false 
+    is_default: false,
+    initial_balance: 0,
+    initial_balance_date: ''
 });
 
 const isNewDepartment = ref(true);
@@ -120,7 +124,16 @@ const deleteDepartment = async (dept: Department) => {
 
 // Bank Account CRUD
 const openNewBankAccount = () => {
-    bankAccount.value = { name: '', account_holder: '', creditor_id: '', iban: '', bic: '', is_default: false };
+    bankAccount.value = { 
+        name: '', 
+        account_holder: '', 
+        creditor_id: '', 
+        iban: '', 
+        bic: '', 
+        is_default: false,
+        initial_balance: 0,
+        initial_balance_date: new Date().toISOString().split('T')[0]
+    };
     isNewBankAccount.value = true;
     bankAccountDialog.value = true;
 };
@@ -311,6 +324,31 @@ onMounted(() => {
             <div class="field mb-4">
                 <label for="accCreditor" class="font-bold block mb-2">Gläubiger-ID</label>
                 <InputText id="accCreditor" v-model="bankAccount.creditor_id" class="w-full" />
+
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div class="field">
+                    <label for="accBalance" class="font-bold block mb-2">Startsaldo (Initial Balance)</label>
+                    <InputNumber 
+                        id="accBalance" 
+                        v-model="bankAccount.initial_balance" 
+                        mode="currency" 
+                        currency="EUR" 
+                        locale="de-DE" 
+                        class="w-full" 
+                    />
+                </div>
+                 <div class="field">
+                    <label for="accBalanceDate" class="font-bold block mb-2">Datum des Saldos</label>
+                    <Calendar 
+                        id="accBalanceDate" 
+                        v-model="bankAccount.initial_balance_date" 
+                        dateFormat="yy-mm-dd" 
+                        class="w-full"
+                    />
+                    <small class="text-gray-500">Ab diesem Datum werden Transaktionen addiert.</small>
+                </div>
+            </div>
+
             </div>
              <div class="field mb-4">
                 <label for="accIban" class="font-bold block mb-2">IBAN</label>
