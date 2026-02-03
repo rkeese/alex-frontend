@@ -258,8 +258,10 @@ export interface Booking {
     amount: number;
     currency?: string;
     client_recipient: string;
+    client_iban?: string; // New: Counterparty IBAN
+    client_bic?: string; // New: Counterparty BIC
     purpose: string;
-    external_iban?: string;
+    external_iban?: string; // Deprecated or alias to client_iban in some contexts
     assigned_booking_account_id?: string | null;
     bank_account_id?: string;
     status?: string;

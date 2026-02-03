@@ -147,10 +147,20 @@ const editBankAccount = (acc: BankAccount) => {
 const saveBankAccount = async () => {
     loadingAccounts.value = true;
     try {
+        // Ensure date is properly formatted string if it's a Date object
+        const payload = { ...bankAccount.value };
+        if (payload.initial_balance_date && payload.initial_balance_date instanceof Date) {
+            payload.initial_balance_date = payload.initial_balance_date.toISOString().split('T')[0];
+        } else if (payload.initial_balance_date && typeof payload.initial_balance_date === 'string') {
+            // Already a string, potentially from existing record or manual input, ensure format if needed
+            // Assuming PrimeVue Calendar manualInput=false enforces format or Date object.
+            // If it comes from API as string and not touched, it remains string.
+        }
+
         if (isNewBankAccount.value) {
-            await api.createBankAccount(bankAccount.value);
-        } else if (bankAccount.value.id) {
-            await api.updateBankAccount(bankAccount.value.id, bankAccount.value);
+            await api.createBankAccount(payload);
+        } else if (payload.id) {
+            await api.updateBankAccount(payload.id, payload);
         }
         bankAccountDialog.value = false;
         bankAccounts.value = await api.getBankAccounts(); // Reload

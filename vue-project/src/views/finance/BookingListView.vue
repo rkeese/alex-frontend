@@ -323,7 +323,16 @@ const getBookingAccountName = (id?: string | null) => {
                  <div class="flex flex-col bg-gray-50 p-3 rounded border">
                     <label class="text-xs font-bold text-gray-500 uppercase mb-1">Recipient / Sender</label>
                     <span class="font-semibold text-lg">{{ selectedBooking.client_recipient }}</span>
-                    <span class="font-mono text-sm text-gray-600 mt-1">{{ selectedBooking.external_iban }}</span>
+                    <div class="flex flex-col mt-2 gap-1">
+                        <div v-if="selectedBooking.client_iban" class="flex items-center gap-2">
+                             <span class="text-xs text-gray-400 w-10">IBAN</span>
+                             <span class="font-mono text-sm text-gray-700 select-all">{{ selectedBooking.client_iban }}</span>
+                        </div>
+                        <div v-if="selectedBooking.client_bic" class="flex items-center gap-2">
+                             <span class="text-xs text-gray-400 w-10">BIC</span>
+                             <span class="font-mono text-sm text-gray-700 select-all">{{ selectedBooking.client_bic }}</span>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="flex flex-col">
