@@ -252,11 +252,19 @@ export interface BookingImportResponse {
 
 export interface Booking {
     id: string;
-    booking_date: string;
+    valuta_date: string;
     amount: number;
-    currency: string;
-    applicant_name: string;
+    currency?: string;
+    client_recipient: string;
     purpose: string;
     external_iban?: string;
-    status: string;
+    assigned_booking_account_id?: string | null;
+    bank_account_id?: string;
+    status?: string;
+}
+
+export interface BookingsResponse {
+    bookings: Booking[];
+    start_amount: number;
+    end_amount: number;
 }

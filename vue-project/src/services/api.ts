@@ -587,12 +587,33 @@ class ApiClient {
         return response.json();
     }
 
-    async getBookings(): Promise<Booking[]> {
-        const result = await this.request<Booking[]>('/finance/bookings', {
+    async getBookings(bankAccountId?: string | null, startDate?: string, endDate?: string): Promise<import('../types').BookingsResponse> {
+        const params = new URLSearchParams();
+        if (bankAccountId) params.append('bank_account_id', bankAccountId);
+        if (startDate) params.append('start_date', startDate);
+        if (endDate) params.append('end_date', endDate);
+
+        const response = await this.request<import('../types').BookingsResponse>(`/finance/bookings?${params.toString()}`, {
             headers: this.getHeaders(),
         });
-        // Ensure we always return an array, even if the backend returns nothing/null/object
-        return Array.isArray(result) ? result : [];
+        
+        // Ensure robust return even if backend sends standard list
+        if (Array.isArray(response)) {
+            return {
+                bookings: response,
+                start_amount: 0,
+                end_amount: 0
+            };
+        }
+        return response;
+    }
+
+    async updateBooking(id: string, data: { assigned_booking_account_id: string | null }): Promise<void> {
+        return this.request<void>(`/finance/bookings/${id}`, {
+            method: 'PUT',
+            headers: this.getHeaders(),
+            body: JSON.stringify(data),
+        });
     }
 
     // Calendar
