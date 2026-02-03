@@ -27,6 +27,7 @@ const endAmount = ref(0);
 const loading = ref(false);
 const error = ref('');
 const debugMode = ref(false);
+const debugResponse = ref<any>(null); // To inspect raw API response
 
 const selectedBooking = ref<Booking | null>(null);
 const detailsVisible = ref(false);
@@ -71,6 +72,7 @@ const fetchRealData = async () => {
     try {
         const response = await api.getBookings(selectedBankAccountId.value, startDate, endDate);
         console.log('Real API Data:', response);
+        debugResponse.value = response;
         
         // Handle various response shapes (New Object vs Old Array vs Empty)
         let list: Booking[] = [];
@@ -101,6 +103,7 @@ const fetchRealData = async () => {
     } catch (e: any) {
         console.error('Failed to load bookings', e);
         error.value = e.message || 'Failed to load booking data';
+        debugResponse.value = { error: error.value };
     } finally {
         loading.value = false;
     }
@@ -269,7 +272,22 @@ const getBookingAccountName = (id?: string | null) => {
                  <!-- Debug View -->
                 <div v-if="debugMode" class="mb-4">
                     <Button label="Exit Debug Mode" @click="debugMode = false" class="mb-2" />
-                    <pre class="bg-gray-100 p-4 rounded overflow-auto max-h-96">{{ JSON.stringify(bookings, null, 2) }}</pre>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-gray-100 p-2 rounded">
+                            <h3 class="font-bold text-sm">Processed Bookings ({{ bookings.length }})</h3>
+                            <pre class="text-xs overflow-auto max-h-60">{{ JSON.stringify(bookings, null, 2) }}</pre>
+                        </div>
+                         <div class="bg-gray-100 p-2 rounded">
+                            <h3 class="font-bold text-sm">Raw API Response</h3>
+                            <pre class="text-xs overflow-auto max-h-60">{{ JSON.stringify(debugResponse, null, 2) }}</pre>
+                            <div class="mt-2 text-xs">
+                                <div>Loading: {{ loading }}</div>
+                                <div>Error: {{ error }}</div>
+                                <div>AccountID: {{ selectedBankAccountId }}</div>
+                                <div>DateRange: {{ dateRange }}</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <DataTable 
