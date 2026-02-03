@@ -248,12 +248,12 @@ const getBookingAccountName = (id?: string | null) => {
                     {{ error }}
                 </div>
                 
-                <div v-if="!selectedBankAccountId && !loading && bookings.length === 0" class="p-4 mb-4 bg-blue-50 text-blue-700 rounded border border-blue-200">
-                    <i class="pi pi-info-circle mr-2"></i> Please select a bank account to view bookings and balances.
+                <div v-if="bookings.length === 0 && !loading" class="p-4 mb-4 bg-blue-50 text-blue-700 rounded border border-blue-200">
+                    <i class="pi pi-info-circle mr-2"></i> No bookings found for the selected period/account. Try adjusting the date range or selecting "All Accounts".
                 </div>
 
                 <DataTable 
-                    v-if="!debugMode" 
+                    v-if="!debugMode && bookings.length > 0" 
                     :value="bookings" 
                     :loading="loading" 
                     paginator 
