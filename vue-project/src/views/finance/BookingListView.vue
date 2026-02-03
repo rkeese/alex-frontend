@@ -254,7 +254,7 @@ const getBookingAccountName = (id?: string | null) => {
 
                     <div>
                         <Button label="Import" icon="pi pi-upload" class="p-button-outlined" @click="router.push('/finance/import')" />
-                        <!-- <Button icon="pi pi-cog" class="p-button-text ml-2" @click="debugMode = !debugMode" /> -->
+                        <Button label="Toggle Debug" icon="pi pi-cog" class="p-button-text ml-2" @click="debugMode = !debugMode" />
                     </div>
                 </div>
                 
@@ -264,6 +264,12 @@ const getBookingAccountName = (id?: string | null) => {
                 
                 <div v-if="bookings.length === 0 && !loading" class="p-4 mb-4 bg-blue-50 text-blue-700 rounded border border-blue-200">
                     <i class="pi pi-info-circle mr-2"></i> No bookings found for the selected period/account. Try adjusting the date range or selecting "All Accounts".
+                </div>
+
+                 <!-- Debug View -->
+                <div v-if="debugMode" class="mb-4">
+                    <Button label="Exit Debug Mode" @click="debugMode = false" class="mb-2" />
+                    <pre class="bg-gray-100 p-4 rounded overflow-auto max-h-96">{{ JSON.stringify(bookings, null, 2) }}</pre>
                 </div>
 
                 <DataTable 
