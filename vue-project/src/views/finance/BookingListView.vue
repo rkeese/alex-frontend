@@ -203,6 +203,48 @@ const getBookingAccountName = (id?: string | null) => {
     const acc = bookingAccounts.value.find(a => a.id === id);
     return acc ? acc.majority_list : 'Unassigned';
 };
+
+const fetchAllData = async () => {
+    // DIAGNOSTIC HELPER: Fetch with minimum constraints
+    loading.value = true;
+    selectedBankAccountId.value = null; // Clear UI filter
+    dateRange.value = null; // Clear UI date filter
+
+    try {
+        // Direct call without date params (Backend should default to all or wide range)
+        // If that fails, we could try wide range, but let's trust "undefined" means "no filter"
+        const response = await api.getBookings(null, undefined, undefined);
+        
+        console.log('Diagnostic Load (Global):', response);
+        debugRequest.value = { mode: 'DIAGNOSTIC_GLOBAL', bank_account_id: null, start_date: undefined, end_date: undefined };
+        debugResponse.value = response;
+        
+        let list: Booking[] = [];
+        if (response && typeof response === 'object' && Array.isArray(response.bookings)) {
+             list = response.bookings;
+             startAmount.value = response.start_amount || 0;
+             endAmount.value = response.end_amount || 0;
+        } else if (Array.isArray(response)) {
+             list = response;
+        }
+        
+        bookings.value = list.map(b => ({
+            ...b,
+            valuta_date: b.valuta_date || b.booking_date || ''
+        }));
+        
+        if (bookings.value.length === 0) {
+            alert("Still 0 records found. \n\nPossible reasons:\n1. The Import was technical success (200 OK) but parsed 0 valid rows (Check CSV format).\n2. Data belongs to a different Club ID.\n3. Backend requires specific Date/Account params (unlikely for global list).");
+        } else {
+            alert(`Success! Found ${bookings.value.length} records. The previous issue was likely the generic Date Range or Account ID filter.`);
+        }
+
+    } catch (e: any) {
+        error.value = "Diagnostic failed: " + e.message;
+    } finally {
+        loading.value = false;
+    }
+};
 </script>
 
 <template>
@@ -266,7 +308,7 @@ const getBookingAccountName = (id?: string | null) => {
 
                     <div>
                         <Button label="Import" icon="pi pi-upload" class="p-button-outlined" @click="router.push('/finance/import')" />
-                        <Button label="Toggle Debug" icon="pi pi-cog" class="p-button-text ml-2" @click="debugMode = !debugMode" />
+                        <Button label="Debug" icon="pi pi-cog" class="p-button-text ml-2" @click="debugMode = !debugMode" />
                     </div>
                 </div>
                 
@@ -274,8 +316,20 @@ const getBookingAccountName = (id?: string | null) => {
                     {{ error }}
                 </div>
                 
-                <div v-if="bookings.length === 0 && !loading" class="p-4 mb-4 bg-blue-50 text-blue-700 rounded border border-blue-200">
-                    <i class="pi pi-info-circle mr-2"></i> No bookings found for the selected period/account. Try adjusting the date range or selecting "All Accounts".
+                <div v-if="bookings.length === 0 && !loading" class="p-4 mb-4 bg-blue-50 text-blue-700 rounded border border-blue-200 flex flex-col gap-2">
+                    <div class="flex items-center">
+                        <i class="pi pi-info-circle mr-2"></i> 
+                        <span>No bookings found for the selected period/account.</span>
+                    </div>
+                    <div class="ml-6 text-sm">
+                        <p>Troubleshooting suggestions:</p>
+                        <ul class="list-disc ml-4">
+                            <li>Try clearing the "Account" filter to "All Accounts".</li>
+                            <li>Your imported data might be outside the selected Date Range.</li>
+                            <li>Did the Import say "0 imported"? Check your CSV format.</li>
+                            <li><a href="#" @click.prevent="fetchAllData" class="underline font-bold hover:text-blue-900">Click here to Force Load ALL data (Clears all filters)</a></li>
+                        </ul>
+                    </div>
                 </div>
 
                  <!-- Debug View -->
