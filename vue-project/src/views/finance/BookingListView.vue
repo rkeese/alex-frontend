@@ -10,7 +10,7 @@ import { useRouter } from 'vue-router';
 
 const router = useRouter();
 const bookings = ref<Booking[]>([]);
-const loading = ref(true);
+const loading = ref(false);
 const error = ref('');
 const debugMode = ref(false);
 
