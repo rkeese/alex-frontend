@@ -27,7 +27,8 @@ const endAmount = ref(0);
 const loading = ref(false);
 const error = ref('');
 const debugMode = ref(false);
-const debugResponse = ref<any>(null); // To inspect raw API response
+const debugResponse = ref<any>('No API response yet'); 
+const debugRequest = ref<any>({}); // Track what we sent
 
 const selectedBooking = ref<Booking | null>(null);
 const detailsVisible = ref(false);
@@ -69,6 +70,13 @@ const fetchRealData = async () => {
     const startDate = dateRange.value && dateRange.value[0] ? formatDateParam(dateRange.value[0]) : undefined;
     const endDate = dateRange.value && dateRange.value[1] ? formatDateParam(dateRange.value[1]) : undefined;
     
+    debugRequest.value = {
+        bankAccountId: selectedBankAccountId.value,
+        startDate,
+        endDate,
+        timestamp: new Date().toISOString()
+    };
+
     try {
         const response = await api.getBookings(selectedBankAccountId.value, startDate, endDate);
         console.log('Real API Data:', response);
@@ -278,13 +286,14 @@ const getBookingAccountName = (id?: string | null) => {
                             <pre class="text-xs overflow-auto max-h-60">{{ JSON.stringify(bookings, null, 2) }}</pre>
                         </div>
                          <div class="bg-gray-100 p-2 rounded">
-                            <h3 class="font-bold text-sm">Raw API Response</h3>
+                            <h3 class="font-bold text-sm">Request & Response</h3>
+                            <div class="text-xs mb-2 p-1 bg-yellow-50 border border-yellow-200">
+                                <strong>Request:</strong> {{ JSON.stringify(debugRequest) }}
+                            </div>
                             <pre class="text-xs overflow-auto max-h-60">{{ JSON.stringify(debugResponse, null, 2) }}</pre>
                             <div class="mt-2 text-xs">
                                 <div>Loading: {{ loading }}</div>
                                 <div>Error: {{ error }}</div>
-                                <div>AccountID: {{ selectedBankAccountId }}</div>
-                                <div>DateRange: {{ dateRange }}</div>
                             </div>
                         </div>
                     </div>
