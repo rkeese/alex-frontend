@@ -42,11 +42,11 @@ const loadMetadata = async () => {
         const bAccounts = await api.getBookingAccounts();
         bookingAccounts.value = bAccounts || [];
 
-        // specific default: Current Year
+        // specific default: Start of PREVIOUS Year to End of Current Year
         const now = new Date();
-        const startOfYear = new Date(now.getFullYear(), 0, 1); 
+        const startOfLastYear = new Date(now.getFullYear() - 1, 0, 1); 
         const endOfYear = new Date(now.getFullYear(), 11, 31);
-        dateRange.value = [startOfYear, endOfYear];
+        dateRange.value = [startOfLastYear, endOfYear];
 
     } catch (e) {
         console.error('Failed to load metadata', e);
@@ -205,18 +205,22 @@ const getBookingAccountName = (id?: string | null) => {
 };
 
 const fetchAllData = async () => {
-    // DIAGNOSTIC HELPER: Fetch with minimum constraints
+    // DIAGNOSTIC HELPER: Fetch with EXPLICIT WIDE RANGE
     loading.value = true;
     selectedBankAccountId.value = null; // Clear UI filter
-    dateRange.value = null; // Clear UI date filter
+    
+    const wideStart = "2000-01-01";
+    const wideEnd = "2099-12-31";
+    
+    // Update UI to reflect what we are doing
+    dateRange.value = [new Date(wideStart), new Date(wideEnd)];
 
     try {
-        // Direct call without date params (Backend should default to all or wide range)
-        // If that fails, we could try wide range, but let's trust "undefined" means "no filter"
-        const response = await api.getBookings(null, undefined, undefined);
+        // Send explicit dates to ensure backend doesn't default to "This Month" or "This Year"
+        const response = await api.getBookings(null, wideStart, wideEnd);
         
-        console.log('Diagnostic Load (Global):', response);
-        debugRequest.value = { mode: 'DIAGNOSTIC_GLOBAL', bank_account_id: null, start_date: undefined, end_date: undefined };
+        console.log('Diagnostic Load (Global Wide):', response);
+        debugRequest.value = { mode: 'DIAGNOSTIC_GLOBAL_WIDE', bank_account_id: null, start_date: wideStart, end_date: wideEnd };
         debugResponse.value = response;
         
         let list: Booking[] = [];
@@ -234,9 +238,9 @@ const fetchAllData = async () => {
         }));
         
         if (bookings.value.length === 0) {
-            alert("Still 0 records found. \n\nPossible reasons:\n1. The Import was technical success (200 OK) but parsed 0 valid rows (Check CSV format).\n2. Data belongs to a different Club ID.\n3. Backend requires specific Date/Account params (unlikely for global list).");
+            alert("Still 0 records found in 2000-2099. \n\nIf the Import was successful, the records might be linked to a different Club ID or DB transaction failed.");
         } else {
-            alert(`Success! Found ${bookings.value.length} records. The previous issue was likely the generic Date Range or Account ID filter.`);
+            // Success - Just show them
         }
 
     } catch (e: any) {
