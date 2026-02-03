@@ -70,10 +70,11 @@ const fetchRealData = async () => {
     const startDate = dateRange.value && dateRange.value[0] ? formatDateParam(dateRange.value[0]) : undefined;
     const endDate = dateRange.value && dateRange.value[1] ? formatDateParam(dateRange.value[1]) : undefined;
     
+    // Debug: Show exactly what api.ts sends
     debugRequest.value = {
-        bankAccountId: selectedBankAccountId.value,
-        startDate,
-        endDate,
+        bank_account_id: selectedBankAccountId.value,
+        start_date: startDate,
+        end_date: endDate,
         timestamp: new Date().toISOString()
     };
 
