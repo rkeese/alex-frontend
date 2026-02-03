@@ -254,7 +254,8 @@ export interface BookingImportResponse {
 
 export interface Booking {
     id: string;
-    valuta_date: string;
+    valuta_date?: string; // Changed to optional to support fallback
+    booking_date?: string; // Legacy support
     amount: number;
     currency?: string;
     client_recipient: string;

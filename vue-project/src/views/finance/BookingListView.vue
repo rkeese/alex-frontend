@@ -72,21 +72,30 @@ const fetchRealData = async () => {
         const response = await api.getBookings(selectedBankAccountId.value, startDate, endDate);
         console.log('Real API Data:', response);
         
-        // Robust handling: Check for response object and its properties
-        if (response) {
-            bookings.value = Array.isArray(response.bookings) ? response.bookings : [];
-            startAmount.value = response.start_amount || 0;
-            endAmount.value = response.end_amount || 0;
-
-            if (bookings.value.length > 1000) {
-                alert(`Warning: Received ${bookings.value.length} records. Truncating for performance.`);
-                bookings.value = bookings.value.slice(0, 1000);
-            }
-        } else {
-             // Fallback/Empty
-             bookings.value = [];
+        // Handle various response shapes (New Object vs Old Array vs Empty)
+        let list: Booking[] = [];
+        
+        if (Array.isArray(response)) {
+             // Legacy Array Response
+             list = response;
              startAmount.value = 0;
              endAmount.value = 0;
+        } else if (response && typeof response === 'object') {
+             // New Object Response
+             list = Array.isArray(response.bookings) ? response.bookings : [];
+             startAmount.value = response.start_amount || 0;
+             endAmount.value = response.end_amount || 0;
+        }
+
+        // Normalize Data (Handle valuta_date vs booking_date mismatch)
+        bookings.value = list.map(b => ({
+            ...b,
+            valuta_date: b.valuta_date || b.booking_date || ''
+        }));
+
+        if (bookings.value.length > 1000) {
+            alert(`Warning: Received ${bookings.value.length} records. Truncating for performance.`);
+            bookings.value = bookings.value.slice(0, 1000);
         }
 
     } catch (e: any) {
@@ -258,7 +267,7 @@ const getBookingAccountName = (id?: string | null) => {
                 </div>
 
                 <DataTable 
-                    v-if="!debugMode && bookings.length > 0" 
+                    v-if="!debugMode" 
                     :value="bookings" 
                     :loading="loading" 
                     paginator 
@@ -272,7 +281,7 @@ const getBookingAccountName = (id?: string | null) => {
                 >
                     <Column field="valuta_date" header="Valuta" sortable style="width: 10%">
                         <template #body="slotProps">
-                             <span>{{ formatDate(slotProps.data.valuta_date) }}</span>
+                             <span>{{ formatDate(slotProps.data.valuta_date || slotProps.data.booking_date) }}</span>
                         </template>
                     </Column>
                     <Column field="client_recipient" header="Empfänger" sortable style="width: 25%">
