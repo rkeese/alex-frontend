@@ -135,6 +135,7 @@ export interface Department {
 export interface BookingAccount {
     id?: string;
     majority_list: string;
+    majority_list_description?: string;
     minority_list: string;
 }
 

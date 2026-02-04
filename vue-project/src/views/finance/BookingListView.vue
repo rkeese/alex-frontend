@@ -198,10 +198,18 @@ const saveBookingLink = async () => {
     }
 };
 
+const getBookingAccountLabel = (account: BookingAccount) => {
+    let label = account.majority_list_description || account.majority_list;
+    if (account.minority_list) {
+        label += ` - ${account.minority_list}`;
+    }
+    return label;
+};
+
 const getBookingAccountName = (id?: string | null) => {
     if (!id) return '';
     const acc = bookingAccounts.value.find(a => a.id === id);
-    return acc ? acc.majority_list : 'Unassigned';
+    return acc ? getBookingAccountLabel(acc) : 'Unassigned';
 };
 
 const fetchAllData = async () => {
@@ -453,7 +461,7 @@ const fetchAllData = async () => {
                         <Dropdown 
                             v-model="selectedBookingAccountLink" 
                             :options="bookingAccounts" 
-                            optionLabel="majority_list" 
+                            :optionLabel="getBookingAccountLabel" 
                             optionValue="id"
                             placeholder="Select Account" 
                             filter
