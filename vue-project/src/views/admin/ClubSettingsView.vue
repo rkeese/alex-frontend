@@ -40,9 +40,7 @@ const bankAccount = ref<BankAccount>({
     creditor_id: '', 
     iban: '', 
     bic: '', 
-    is_default: false,
-    initial_balance: 0,
-    initial_balance_date: ''
+    is_default: false
 });
 
 const isNewDepartment = ref(true);
@@ -130,9 +128,7 @@ const openNewBankAccount = () => {
         creditor_id: '', 
         iban: '', 
         bic: '', 
-        is_default: false,
-        initial_balance: 0,
-        initial_balance_date: new Date().toISOString().split('T')[0]
+        is_default: false
     };
     isNewBankAccount.value = true;
     bankAccountDialog.value = true;
@@ -147,16 +143,8 @@ const editBankAccount = (acc: BankAccount) => {
 const saveBankAccount = async () => {
     loadingAccounts.value = true;
     try {
-        // Ensure date is properly formatted string if it's a Date object
         const payload = { ...bankAccount.value };
-        if (payload.initial_balance_date && payload.initial_balance_date instanceof Date) {
-            payload.initial_balance_date = payload.initial_balance_date.toISOString().split('T')[0];
-        } else if (payload.initial_balance_date && typeof payload.initial_balance_date === 'string') {
-            // Already a string, potentially from existing record or manual input, ensure format if needed
-            // Assuming PrimeVue Calendar manualInput=false enforces format or Date object.
-            // If it comes from API as string and not touched, it remains string.
-        }
-
+        
         if (isNewBankAccount.value) {
             await api.createBankAccount(payload);
         } else if (payload.id) {
@@ -334,37 +322,12 @@ onMounted(() => {
             <div class="field mb-4">
                 <label for="accCreditor" class="font-bold block mb-2">Gläubiger-ID</label>
                 <InputText id="accCreditor" v-model="bankAccount.creditor_id" class="w-full" />
-
-            <div class="grid grid-cols-2 gap-4 mb-4">
-                <div class="field">
-                    <label for="accBalance" class="font-bold block mb-2">Startsaldo (Initial Balance)</label>
-                    <InputNumber 
-                        id="accBalance" 
-                        v-model="bankAccount.initial_balance" 
-                        mode="currency" 
-                        currency="EUR" 
-                        locale="de-DE" 
-                        class="w-full" 
-                    />
-                </div>
-                 <div class="field">
-                    <label for="accBalanceDate" class="font-bold block mb-2">Datum des Saldos</label>
-                    <Calendar 
-                        id="accBalanceDate" 
-                        v-model="bankAccount.initial_balance_date" 
-                        dateFormat="yy-mm-dd" 
-                        class="w-full"
-                    />
-                    <small class="text-gray-500">Ab diesem Datum werden Transaktionen addiert.</small>
-                </div>
             </div>
-
-            </div>
-             <div class="field mb-4">
+            <div class="field mb-4">
                 <label for="accIban" class="font-bold block mb-2">IBAN</label>
                 <InputText id="accIban" v-model="bankAccount.iban" class="w-full" />
             </div>
-             <div class="field mb-4">
+            <div class="field mb-4">
                 <label for="accBic" class="font-bold block mb-2">BIC</label>
                 <InputText id="accBic" v-model="bankAccount.bic" class="w-full" />
             </div>

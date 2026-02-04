@@ -587,6 +587,34 @@ class ApiClient {
         return response.json();
     }
 
+    async getPendingBookings(): Promise<import('../types').BookingImport[]> {
+        return this.request<import('../types').BookingImport[]>('/finance/import/bookings', {
+            headers: this.getHeaders(),
+        });
+    }
+
+    async updatePendingBooking(id: string, data: Partial<import('../types').BookingImport>): Promise<import('../types').BookingImport> {
+        return this.request<import('../types').BookingImport>(`/finance/import/bookings/${id}`, {
+            method: 'PUT',
+            headers: this.getHeaders(),
+            body: JSON.stringify(data),
+        });
+    }
+
+    async deletePendingBooking(id: string): Promise<void> {
+        return this.request<void>(`/finance/import/bookings/${id}`, {
+            method: 'DELETE',
+            headers: this.getHeaders(),
+        });
+    }
+
+    async commitPendingBooking(id: string): Promise<void> {
+        return this.request<void>(`/finance/import/bookings/${id}/commit`, {
+            method: 'POST',
+            headers: this.getHeaders(),
+        });
+    }
+
     async getBookings(bankAccountId?: string | null, startDate?: string, endDate?: string): Promise<import('../types').BookingsResponse> {
         const params = new URLSearchParams();
         if (bankAccountId) params.append('bank_account_id', bankAccountId);

@@ -175,8 +175,6 @@ export interface BankAccount {
     iban: string;
     bic: string;
     is_default: boolean;
-    initial_balance?: number;
-    initial_balance_date?: string; // YYYY-MM-DD
 }
 
 export interface SepaXmlRequest {
@@ -250,6 +248,19 @@ export interface AnniversaryEntry {
 
 export interface BookingImportResponse {
     message: string;
+    imported_count?: number;
+}
+
+export interface BookingImport {
+    id: string;
+    valuta_date: string;
+    booking_date: string;
+    amount: number;
+    currency: string;
+    client_recipient: string;
+    client_iban: string;
+    purpose: string;
+    bank_account_id: string;
 }
 
 export interface Booking {
