@@ -630,10 +630,11 @@ class ApiClient {
         });
     }
 
-    async commitPendingBooking(id: string): Promise<void> {
+    async commitPendingBooking(id: string, data: import('../types').BookingImport): Promise<void> {
         return this.request<void>(`/finance/import/bookings/${id}/commit`, {
             method: 'POST',
             headers: this.getHeaders(),
+            body: JSON.stringify(data),
         });
     }
 

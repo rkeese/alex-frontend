@@ -12,6 +12,7 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
+import Textarea from 'primevue/textarea';
 import InputNumber from 'primevue/inputnumber';
 import { useToast } from 'primevue/usetoast';
 
@@ -132,9 +133,9 @@ const deleteBooking = async (id: string) => {
     }
 };
 
-const commitBooking = async (id: string) => {
+const commitBooking = async (booking: BookingImport) => {
     try {
-        await api.commitPendingBooking(id);
+        await api.commitPendingBooking(booking.id, booking);
         toast.add({ severity: 'success', summary: 'Success', detail: 'Booking committed' });
         await loadPendingBookings();
     } catch (e: any) {
@@ -204,7 +205,11 @@ onMounted(() => {
                     <template #empty>No pending imports found.</template>
                     
                     <Column field="valuta_date" header="Valuta" sortable></Column>
-                    <Column field="client_recipient" header="Recipient" sortable></Column>
+                    <Column field="payment_participant_name" header="Recipient" sortable>
+                         <template #body="slotProps">
+                            {{ slotProps.data.payment_participant_name || slotProps.data.client_recipient }}
+                        </template>
+                    </Column>
                     <Column field="purpose" header="Purpose" sortable></Column>
                     <Column field="amount" header="Amount" sortable>
                         <template #body="slotProps">
@@ -213,11 +218,15 @@ onMounted(() => {
                             </span>
                         </template>
                     </Column>
-                    <Column field="client_iban" header="IBAN" sortable></Column>
+                    <Column field="payment_participant_iban" header="IBAN" sortable>
+                        <template #body="slotProps">
+                            {{ slotProps.data.payment_participant_iban || slotProps.data.client_iban }}
+                        </template>
+                    </Column>
                     <Column header="Actions">
                         <template #body="slotProps">
                             <div class="flex gap-2">
-                                <Button icon="pi pi-check" severity="success" outlined rounded aria-label="Commit" @click="commitBooking(slotProps.data.id)" title="Commit" />
+                                <Button icon="pi pi-check" severity="success" outlined rounded aria-label="Commit" @click="commitBooking(slotProps.data)" title="Commit" />
                                 <Button icon="pi pi-pencil" severity="info" outlined rounded aria-label="Edit" @click="editBooking(slotProps.data)" title="Edit" />
                                 <Button icon="pi pi-trash" severity="danger" outlined rounded aria-label="Delete" @click="deleteBooking(slotProps.data.id)" title="Discard" />
                             </div>
@@ -235,11 +244,11 @@ onMounted(() => {
                 </div>
                 <div class="flex flex-col gap-2">
                     <label for="recipient_name">Recipient</label>
-                    <InputText id="recipient_name" v-model="editingBooking.client_recipient" />
+                    <InputText id="recipient_name" v-model="editingBooking.payment_participant_name" />
                 </div>
                 <div class="flex flex-col gap-2">
                     <label for="purpose">Purpose</label>
-                    <InputText id="purpose" v-model="editingBooking.purpose" />
+                    <Textarea id="purpose" v-model="editingBooking.purpose" rows="5" autoResize />
                 </div>
                 <div class="flex flex-col gap-2">
                     <label for="amount">Amount</label>
@@ -247,7 +256,7 @@ onMounted(() => {
                 </div>
                 <div class="flex flex-col gap-2">
                     <label for="recipient_iban">IBAN</label>
-                    <InputText id="recipient_iban" v-model="editingBooking.client_iban" />
+                    <InputText id="recipient_iban" v-model="editingBooking.payment_participant_iban" />
                 </div>
             </div>
             <template #footer>

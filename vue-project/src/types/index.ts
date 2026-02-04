@@ -258,7 +258,9 @@ export interface BookingImport {
     booking_date: string;
     amount: number;
     currency: string;
-    client_recipient: string;
+    payment_participant_name: string; // Updated from client_recipient
+    client_recipient?: string; // Legacy/Fallback
+    payment_participant_iban?: string;
     client_iban: string;
     purpose: string;
     bank_account_id: string;
@@ -270,9 +272,12 @@ export interface Booking {
     booking_date?: string; // Legacy support
     amount: number;
     currency?: string;
-    client_recipient: string;
+    payment_participant_name?: string; // Updated field name
+    client_recipient?: string; // Legacy support
     client_iban?: string; // New: Counterparty IBAN
+    payment_participant_iban?: string; // Alias
     client_bic?: string; // New: Counterparty BIC
+    payment_participant_bic?: string; // Alias
     purpose: string;
     external_iban?: string; // Deprecated or alias to client_iban in some contexts
     assigned_booking_account_id?: string | null;

@@ -376,9 +376,9 @@ const fetchAllData = async () => {
                              <span>{{ formatDate(slotProps.data.valuta_date || slotProps.data.booking_date) }}</span>
                         </template>
                     </Column>
-                    <Column field="client_recipient" header="Empfänger" sortable style="width: 25%">
+                    <Column field="payment_participant_name" header="Empfänger" sortable style="width: 25%">
                         <template #body="slotProps">
-                            <div class="font-semibold">{{ slotProps.data.client_recipient }}</div>
+                            <div class="font-semibold">{{ slotProps.data.payment_participant_name || slotProps.data.client_recipient }}</div>
                         </template>
                     </Column>
                     <Column field="purpose" header="Verwendungszweck" sortable style="width: 35%">
