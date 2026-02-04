@@ -21,6 +21,7 @@ const loading = ref(false);
 const tableLoading = ref(false);
 const error = ref('');
 const resultMessage = ref('');
+const importErrors = ref<{ row: number; error: string }[]>([]);
 const uploadKey = ref(0); // Key to force re-render of separate components
 
 const pendingBookings = ref<BookingImport[]>([]);
@@ -47,29 +48,51 @@ const onUpload = async (event: any) => {
     loading.value = true;
     error.value = '';
     resultMessage.value = '';
+    importErrors.value = [];
 
     try {
         const response = await api.importBookings(file);
         resultMessage.value = response.message;
-        
-        toast.add({ 
-            severity: 'success', 
-            summary: 'Success', 
-            detail: response.message, 
-            life: 3000 
-        });
+        if (response.errors && response.errors.length > 0) {
+            importErrors.value = response.errors;
+            toast.add({ 
+                severity: 'warn', 
+                summary: 'Import Warning', 
+                detail: `Imported with ${response.errors.length} errors. Check details below.`, 
+                life: 5000 
+            });
+        } else {
+            toast.add({ 
+                severity: 'success', 
+                summary: 'Success', 
+                detail: response.message, 
+                life: 3000 
+            });
+        }
         
         // Refresh the list
         await loadPendingBookings();
         
     } catch (e: any) {
-        error.value = e.message || 'Failed to import bookings';
-        toast.add({ 
-            severity: 'error', 
-            summary: 'Error', 
-            detail: error.value, 
-            life: 3000 
-        });
+        // Handle structured error response if thrown
+        if (e.errors && Array.isArray(e.errors)) {
+             error.value = e.message || 'Import failed with errors';
+             importErrors.value = e.errors;
+             toast.add({ 
+                severity: 'error', 
+                summary: 'Import Failed', 
+                detail: error.value, 
+                life: 5000 
+            });
+        } else {
+            error.value = e.message || 'Failed to import bookings';
+            toast.add({ 
+                severity: 'error', 
+                summary: 'Error', 
+                detail: error.value, 
+                life: 3000 
+            });
+        }
     } finally {
         loading.value = false;
         uploadKey.value++; // Reset uploader state
@@ -159,6 +182,16 @@ onMounted(() => {
                 <Message v-if="resultMessage" severity="success" class="mt-4" :closable="false">
                     {{ resultMessage }}
                 </Message>
+
+                <div v-if="importErrors.length > 0" class="mt-4">
+                    <Message severity="warn" :closable="false">
+                        The import completed with errors. See details below.
+                    </Message>
+                    <DataTable :value="importErrors" class="mt-2" scrollable scrollHeight="300px">
+                         <Column field="row" header="Row" style="width: 80px"></Column>
+                         <Column field="error" header="Error Message"></Column>
+                    </DataTable>
+                </div>
             </template>
         </Card>
 

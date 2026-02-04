@@ -582,7 +582,29 @@ class ApiClient {
         
         if (!response.ok) {
             const text = await response.text();
-            throw new Error(text || 'Import failed');
+            
+            // Try parsing JSON error response which might contain details
+            try {
+                const json = JSON.parse(text);
+                // Return the json if it has the expected error structure, even on non-200 if appropriate?
+                // Actually typical REST APIs return 200 for partial success or 400 for bad request. 
+                // If the user says "The backend server ... exited immediately", maybe it was crashing.
+                // But assuming now it returns a response.
+                
+                // If it's a 200OK with partial errors, we are in the success block below.
+                // If it's a 4xx/5xx with structured errors:
+                if (json.errors && Array.isArray(json.errors)) {
+                     // Throwing an object that mimics the successful response structure but indicates failure
+                     // or just throw it to be caught by the view.
+                     throw json; 
+                }
+                
+                throw new Error(json.message || text);
+            } catch(e: any) {
+                 if (e.errors) throw e; // Propagate the structured error
+                 // proceed
+            }
+             throw new Error(text || 'Import failed');
         }
         return response.json();
     }

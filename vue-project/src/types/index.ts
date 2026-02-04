@@ -248,7 +248,8 @@ export interface AnniversaryEntry {
 
 export interface BookingImportResponse {
     message: string;
-    imported_count?: number;
+    count?: number;
+    errors?: { row: number; error: string }[];
 }
 
 export interface BookingImport {
