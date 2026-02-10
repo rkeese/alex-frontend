@@ -2,12 +2,12 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { api } from '@/services/api';
-import type { Receipt, InvoiceItem, Club } from '@/types';
+import type { Receipt, InvoiceItem, Club, BookingAccount } from '@/types';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Calendar from 'primevue/calendar';
-import Select from 'primevue/select';
+import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
 import Checkbox from 'primevue/checkbox';
 import Panel from 'primevue/panel';
@@ -27,8 +27,8 @@ const receipt = ref<Receipt>({
     type: 'expense',
     recipient: '',
     number: '',
-    date: new Date().toISOString().split('T')[0],
-    position_assignment: 'Ideel',
+    date: new Date().toISOString().split('T')[0], // Initially string, but bound to Calendar which might convert to Date object
+    position_assignment: '',
     amount: 0,
     is_booked: false,
     note: '',
@@ -43,8 +43,15 @@ const receipt = ref<Receipt>({
 });
 
 const deliveryDateSame = ref(true);
+const bookingAccounts = ref<BookingAccount[]>([]);
 
-const assignmentOptions = ['Ideel', 'Zweckbetrieb', 'Vermögensverwaltung', 'Wirtschaftlicher Geschäftsbetrieb'];
+const bookingAccountOptions = computed(() => {
+    return bookingAccounts.value.map(ba => ({
+        label: `${ba.minority_list} ${ba.minority_list_description || ''}`,
+        value: ba.majority_list // Or ba.majority_list if backend expects string name, but ID is safer if supported
+    }));
+});
+
 const typeOptions = [
     { label: 'Einnahme', value: 'income' },
     { label: 'Ausgabe', value: 'expense' }
@@ -52,7 +59,32 @@ const typeOptions = [
 
 const taxRates = [0, 7, 19];
 
+const toDate = (str: string | undefined): Date | undefined => {
+    if (!str) return undefined;
+    const [y, m, d] = str.split('-').map(Number);
+    return new Date(y, m - 1, d);
+};
+
+const toStr = (d: Date | null | undefined): string => {
+    if (!d) return '';
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+const receiptDate = computed({
+    get: () => toDate(receipt.value.date),
+    set: (val) => { receipt.value.date = toStr(val); }
+});
+
+const deliveryDate = computed({
+    get: () => toDate(receipt.value.delivery_date),
+    set: (val) => { receipt.value.delivery_date = toStr(val); }
+});
+
 onMounted(async () => {
+    await loadBookingAccounts();
     if (isEditMode.value) {
         await loadReceipt();
     } else {
@@ -60,6 +92,17 @@ onMounted(async () => {
         addItem();
     }
 });
+
+const loadBookingAccounts = async () => {
+    try {
+        const accounts = await api.getBookingAccounts();
+        if (accounts) {
+            bookingAccounts.value = accounts;
+        }
+    } catch (e) {
+        console.error('Failed to load booking accounts', e);
+    }
+};
 
 const loadReceipt = async () => {
     loading.value = true;
@@ -80,10 +123,8 @@ const loadReceipt = async () => {
             receipt.value = {
                 ...found,
                 invoice_items: found.invoice_items || [],
-                date: found.date ? found.date.split('T')[0] : '',
-                delivery_date: found.delivery_date ? found.delivery_date.split('T')[0] : ''
             };
-            if (receipt.value.delivery_date && receipt.value.delivery_date !== receipt.value.date) {
+            if (found.delivery_date && found.delivery_date !== found.date) {
                 deliveryDateSame.value = false;
             }
         }
@@ -104,11 +145,13 @@ const addItem = () => {
         vat_amount: 0,
         gross_amount: 0
     });
+    calculateTotals();
 };
 
 const removeItem = (index: number) => {
     if (receipt.value.invoice_items) {
         receipt.value.invoice_items.splice(index, 1);
+        calculateTotals();
     }
 };
 
@@ -132,33 +175,14 @@ const calculateTotals = () => {
         });
     }
 
-    receipt.value.amount = parseFloat(totalGross.toFixed(2));
     receipt.value.total_vat_amount = parseFloat(totalVat.toFixed(2));
+    receipt.value.amount = parseFloat(totalGross.toFixed(2));
 };
-
-// Watch for changes in items to recalculate
-watch(() => receipt.value.invoice_items, () => {
-    calculateTotals();
-}, { deep: true });
 
 // Sync buyer name to recipient (legacy)
 watch(() => receipt.value.buyer_name, (newVal) => {
     if (newVal) receipt.value.recipient = newVal;
 });
-
-const loadClubData = async () => {
-    try {
-        const club = await api.getClub(authStore.clubId); // Assuming authStore has clubId
-        if (club) {
-            receipt.value.seller_name = club.name;
-            receipt.value.seller_address = `${club.street_house_number || ''}\n${club.postal_code || ''} ${club.city || ''}`;
-            receipt.value.seller_tax_id = club.tax_office_tax_number || '';
-            // VAT ID not on Club interface?
-        }
-    } catch (e) {
-        console.error("Failed to load club data", e);
-    }
-};
 
 const save = async () => {
     // Validation
@@ -174,28 +198,12 @@ const save = async () => {
         alert('Bitte fügen Sie mindestens eine Position hinzu.');
         return;
     }
-    // Check if items have quantity and description/type
-    const invalidItems = receipt.value.invoice_items.filter(i => !i.description || i.quantity <= 0);
-    if (invalidItems.length > 0) {
-        alert('Bitte überprüfen Sie die Positionen (Beschreibung und Menge erforderlich).');
-        return;
-    }
-
+    
     saving.value = true;
     try {
         if (deliveryDateSame.value) {
             receipt.value.delivery_date = receipt.value.date;
         }
-
-        // Ensure date format is YYYY-MM-DD
-        // (PrimeVue Calendar might give Date object or string depending on config, better ensure string)
-        if (receipt.value.date instanceof Date) {
-             receipt.value.date = (receipt.value.date as Date).toISOString().split('T')[0];
-        }
-         if (receipt.value.delivery_date instanceof Date) {
-             receipt.value.delivery_date = (receipt.value.delivery_date as Date).toISOString().split('T')[0];
-        }
-
 
         if (isEditMode.value && receipt.value.id) {
             await api.updateReceipt(receipt.value.id, receipt.value);
@@ -233,15 +241,15 @@ const save = async () => {
                     </div>
                     <div class="field">
                         <label for="type" class="font-bold block mb-2">Typ *</label>
-                        <Select id="type" v-model="receipt.type" :options="typeOptions" optionLabel="label" optionValue="value" />
+                        <Dropdown id="type" v-model="receipt.type" :options="typeOptions" optionLabel="label" optionValue="value" />
                     </div>
                     <div class="field">
                         <label for="date" class="font-bold block mb-2">Rechnungsdatum *</label>
-                        <Calendar id="date" v-model="receipt.date" dateFormat="yy-mm-dd" showIcon modelValue="string" />
+                        <Calendar id="date" v-model="receiptDate" dateFormat="dd.mm.yy" showIcon />
                     </div>
                     <div class="field">
-                        <label for="assignment" class="font-bold block mb-2">Bereich</label>
-                        <Select id="assignment" v-model="receipt.position_assignment" :options="assignmentOptions" />
+                        <label for="assignment" class="font-bold block mb-2">Kategorie</label>
+                        <Dropdown id="assignment" v-model="receipt.position_assignment" :options="bookingAccountOptions" optionLabel="label" optionValue="value" placeholder="Bitte wählen..." filter />
                     </div>
                     <div class="field md:col-span-2">
                         <label for="delivery_date" class="font-bold block mb-2">Lieferdatum</label>
@@ -249,19 +257,18 @@ const save = async () => {
                             <Checkbox v-model="deliveryDateSame" :binary="true" inputId="deliverySame" />
                             <label for="deliverySame" class="ml-2">Identisch mit Rechnungsdatum</label>
                         </div>
-                        <Calendar v-if="!deliveryDateSame" id="delivery_date" v-model="receipt.delivery_date" dateFormat="yy-mm-dd" showIcon />
+                        <Calendar v-if="!deliveryDateSame" id="delivery_date" v-model="deliveryDate" dateFormat="dd.mm.yy" showIcon />
                     </div>
                 </div>
             </Panel>
-
+            
             <!-- Section 2: Parties -->
             <Panel header="Beteiligte" toggleable class="mb-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <!-- Seller -->
                     <div>
                          <div class="flex justify-between items-center mb-2">
-                            <h3 class="font-bold text-lg">Verkäufer / Leistender</h3>
-                             <Button label="Verein laden" icon="pi pi-download" size="small" outlined @click="loadClubData" />
+                            <h3 class="font-bold text-lg">Rechnungssteller</h3>
                          </div>
                          <div class="flex flex-col gap-3">
                             <div class="field">
@@ -274,7 +281,7 @@ const save = async () => {
                             </div>
                             <div class="grid grid-cols-2 gap-3">
                                 <div class="field">
-                                    <label class="font-bold block mb-2">Steuernummer</label>
+                                    <label class="font-bold block mb-2">Steuer-Nr.</label>
                                     <InputText v-model="receipt.seller_tax_id" />
                                 </div>
                                 <div class="field">
@@ -287,7 +294,7 @@ const save = async () => {
 
                     <!-- Buyer -->
                     <div>
-                        <h3 class="font-bold text-lg mb-2 pt-2">Empfänger / Leistungsempfänger</h3>
+                        <h3 class="font-bold text-lg mb-2 pt-2">Rechnungsempfänger</h3>
                          <div class="flex flex-col gap-3">
                             <div class="field">
                                 <label class="font-bold block mb-2">Name</label>
@@ -310,36 +317,36 @@ const save = async () => {
                              <div class="col-span-12 md:col-span-4 field">
                                  <label v-if="index===0" class="font-bold block mb-2">Beschreibung</label>
                                  <span v-else class="md:hidden font-bold block mb-1">Beschreibung</span>
-                                 <InputText v-model="item.description" placeholder="Position..." />
+                                 <Textarea v-model="item.description" placeholder="Position..." rows="1" autoResize />
                              </div>
                              <div class="col-span-12 md:col-span-2 field">
                                  <label v-if="index===0" class="font-bold block mb-2">Menge</label>
                                  <span v-else class="md:hidden font-bold block mb-1">Menge</span>
-                                 <InputNumber v-model="item.quantity" :min="0" :minFractionDigits="0" showButtons />
+                                 <InputNumber v-model="item.quantity" :min="0" :minFractionDigits="0" showButtons @update:modelValue="calculateTotals" />
                              </div>
                               <div class="col-span-12 md:col-span-2 field">
                                  <label v-if="index===0" class="font-bold block mb-2">Einzel (Netto)</label>
                                  <span v-else class="md:hidden font-bold block mb-1">Einzel (Netto)</span>
-                                 <InputNumber v-model="item.net_amount" mode="currency" currency="EUR" />
+                                 <InputNumber v-model="item.net_amount" mode="currency" currency="EUR" @update:modelValue="calculateTotals" />
                              </div>
                              <div class="col-span-12 md:col-span-2 field">
                                   <label v-if="index===0" class="font-bold block mb-2">Steuer</label>
                                   <span v-else class="md:hidden font-bold block mb-1">Steuer</span>
-                                  <Select v-model="item.tax_rate" :options="taxRates" class="w-full">
+                                  <Dropdown v-model="item.tax_rate" :options="taxRates" class="w-full" @change="calculateTotals">
                                     <template #value="slotProps">
                                         {{ slotProps.value }}%
                                     </template>
                                     <template #option="slotProps">
                                         {{ slotProps.option }}%
                                     </template>
-                                  </Select>
+                                  </Dropdown>
                              </div>
                               <div class="col-span-12 md:col-span-2 field relative">
                                   <label v-if="index===0" class="font-bold block mb-2">Brutto</label>
                                   <span v-else class="md:hidden font-bold block mb-1">Brutto</span>
                                   <div class="flex gap-2">
                                     <InputNumber v-model="item.gross_amount" mode="currency" currency="EUR" disabled class="flex-1" />
-                                    <Button icon="pi pi-trash" severity="danger" text @click="removeItem(index)" v-tooltip="'Entfernen'" />
+                                    <Button icon="pi pi-trash" severity="danger" text @click="removeItem(index)" title="Entfernen" />
                                   </div>
                              </div>
                          </div>

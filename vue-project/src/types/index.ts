@@ -137,6 +137,7 @@ export interface BookingAccount {
     majority_list: string;
     majority_list_description?: string;
     minority_list: string;
+    minority_list_description?: string;
 }
 
 export interface InvoiceItem {
