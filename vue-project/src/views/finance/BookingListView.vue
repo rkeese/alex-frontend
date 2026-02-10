@@ -105,13 +105,13 @@ const fetchRealData = async () => {
         }));
 
         if (bookings.value.length > 1000) {
-            alert(`Warning: Received ${bookings.value.length} records. Truncating for performance.`);
+            alert(`Warnung: ${bookings.value.length} Datensätze empfangen. Anzeige wird aus Performancegründen gekürzt.`);
             bookings.value = bookings.value.slice(0, 1000);
         }
 
     } catch (e: any) {
         console.error('Failed to load bookings', e);
-        error.value = e.message || 'Failed to load booking data';
+        error.value = e.message || 'Fehler beim Laden der Buchungsdaten';
         debugResponse.value = { error: error.value };
     } finally {
         loading.value = false;
@@ -194,7 +194,7 @@ const saveBookingLink = async () => {
         detailsVisible.value = false;
     } catch (e: any) {
         console.error('Failed to update booking link', e);
-        alert('Failed to update assignment: ' + e.message);
+        alert('Fehler beim Aktualisieren der Zuordnung: ' + e.message);
     }
 };
 
@@ -209,7 +209,7 @@ const getBookingAccountLabel = (account: BookingAccount) => {
 const getBookingAccountName = (id?: string | null) => {
     if (!id) return '';
     const acc = bookingAccounts.value.find(a => a.id === id);
-    return acc ? getBookingAccountLabel(acc) : 'Unassigned';
+    return acc ? getBookingAccountLabel(acc) : 'Nicht zugeordnet';
 };
 
 const fetchAllData = async () => {
@@ -246,13 +246,13 @@ const fetchAllData = async () => {
         }));
         
         if (bookings.value.length === 0) {
-            alert("Still 0 records found in 2000-2099. \n\nIf the Import was successful, the records might be linked to a different Club ID or DB transaction failed.");
+            alert("Immer noch 0 Datensätze zwischen 2000-2099 gefunden. \n\nFalls der Import erfolgreich war, sind die Datensätze möglicherweise einer anderen Vereins-ID zugeordnet oder die Datenbanktransaktion ist fehlgeschlagen.");
         } else {
             // Success - Just show them
         }
 
     } catch (e: any) {
-        error.value = "Diagnostic failed: " + e.message;
+        error.value = "Diagnose fehlgeschlagen: " + e.message;
     } finally {
         loading.value = false;
     }
@@ -261,65 +261,65 @@ const fetchAllData = async () => {
 
 <template>
     <div class="card">
-        <h1 class="text-2xl font-bold mb-4">Bank Bookings</h1>
+        <h1 class="text-2xl font-bold mb-4">Buchungen</h1>
         
         <Card>
             <template #content>
                 <!-- Controls Header -->
                 <div class="flex flex-wrap align-items-center justify-content-between mb-4 gap-3">
                     <div class="flex flex-wrap align-items-center gap-2">
-                        <div class="flex flex-col">
-                            <span class="text-xs text-gray-500 mb-1">Account</span>
+                        <div class="flex flex-col" v-if="false">
+                            <span class="text-xs text-gray-500 mb-1">Konto</span>
                             <Dropdown 
                                 v-model="selectedBankAccountId" 
                                 :options="bankAccounts" 
                                 optionLabel="name" 
                                 optionValue="id" 
-                                placeholder="Select Account" 
+                                placeholder="Konto auswählen" 
                                 showClear
                                 class="w-full md:w-14rem" 
                             />
                         </div>
 
                         <div class="flex flex-col">
-                            <span class="text-xs text-gray-500 mb-1">Period</span>
+                            <span class="text-xs text-gray-500 mb-1">Zeitraum</span>
                             <Calendar 
                                 v-model="dateRange" 
                                 selectionMode="range" 
                                 :manualInput="false" 
                                 dateFormat="dd.mm.yy" 
                                 showIcon 
-                                placeholder="Select Date Range"
+                                placeholder="Zeitraum auswählen"
                             />
                         </div>
 
                         <div class="flex items-end h-full mt-auto">
-                             <Button label="Load" icon="pi pi-refresh" @click="fetchRealData" :loading="loading" />
+                             <Button label="Laden" icon="pi pi-refresh" @click="fetchRealData" :loading="loading" />
                         </div>
                     </div>
 
                     <!-- Financial Summary -->
                     <div v-if="selectedBankAccountId" class="flex align-items-center gap-4 bg-gray-50 p-2 rounded shadow-sm border">
                          <div class="flex flex-col">
-                            <span class="text-xs text-gray-500 uppercase font-semibold">Start</span>
+                            <span class="text-xs text-gray-500 uppercase font-semibold">Anfangssaldo</span>
                             <span class="font-mono text-lg">{{ formatCurrency(startAmount, 'EUR') }}</span>
                          </div>
                          <div class="text-gray-400"><i class="pi pi-arrow-right"></i></div>
                          <div class="flex flex-col">
-                            <span class="text-xs text-gray-500 uppercase font-semibold">Change</span>
+                            <span class="text-xs text-gray-500 uppercase font-semibold">Änderung</span>
                             <span :class="{'text-red-600': totalPeriodChange < 0, 'text-green-600': totalPeriodChange > 0, 'font-bold text-lg': true}">
                                 {{ totalPeriodChange > 0 ? '+' : '' }}{{ formatCurrency(totalPeriodChange, 'EUR') }}
                             </span>
                          </div>
                          <div class="text-gray-400"><i class="pi pi-arrow-right"></i></div>
                          <div class="flex flex-col">
-                            <span class="text-xs text-gray-500 uppercase font-semibold">End</span>
+                            <span class="text-xs text-gray-500 uppercase font-semibold">Endsaldo</span>
                             <span class="font-bold font-mono text-lg">{{ formatCurrency(endAmount, 'EUR') }}</span>
                          </div>
                     </div>
 
-                    <div>
-                        <Button label="Import" icon="pi pi-upload" class="p-button-outlined" @click="router.push('/finance/import')" />
+                    <div v-if="false">
+                        <Button label="Importieren" icon="pi pi-upload" class="p-button-outlined" @click="router.push('/finance/import')" />
                         <Button label="Debug" icon="pi pi-cog" class="p-button-text ml-2" @click="debugMode = !debugMode" />
                     </div>
                 </div>
@@ -331,22 +331,22 @@ const fetchAllData = async () => {
                 <div v-if="bookings.length === 0 && !loading" class="p-4 mb-4 bg-blue-50 text-blue-700 rounded border border-blue-200 flex flex-col gap-2">
                     <div class="flex items-center">
                         <i class="pi pi-info-circle mr-2"></i> 
-                        <span>No bookings found for the selected period/account.</span>
+                        <span>Keine Buchungen für den ausgewählten Zeitraum/Konto gefunden.</span>
                     </div>
                     <div class="ml-6 text-sm">
-                        <p>Troubleshooting suggestions:</p>
+                        <p>Vorschläge zur Fehlerbehebung:</p>
                         <ul class="list-disc ml-4">
-                            <li>Try clearing the "Account" filter to "All Accounts".</li>
-                            <li>Your imported data might be outside the selected Date Range.</li>
-                            <li>Did the Import say "0 imported"? Check your CSV format.</li>
-                            <li><a href="#" @click.prevent="fetchAllData" class="underline font-bold hover:text-blue-900">Click here to Force Load ALL data (Clears all filters)</a></li>
+                            <li>Versuchen Sie, den "Konto"-Filter auf "Alle Konten" zu setzen.</li>
+                            <li>Ihre importierten Daten liegen möglicherweise außerhalb des ausgewählten Zeitraums.</li>
+                            <li>Hat der Import "0 importiert" gemeldet? Überprüfen Sie Ihr CSV-Format.</li>
+                            <li><a href="#" @click.prevent="fetchAllData" class="underline font-bold hover:text-blue-900">Hier klicken, um ALLE Daten zu laden (löscht alle Filter)</a></li>
                         </ul>
                     </div>
                 </div>
 
                  <!-- Debug View -->
                 <div v-if="debugMode" class="mb-4">
-                    <Button label="Exit Debug Mode" @click="debugMode = false" class="mb-2" />
+                    <Button label="Debug-Modus beenden" @click="debugMode = false" class="mb-2" />
                     <div class="grid grid-cols-2 gap-4">
                         <div class="bg-gray-100 p-2 rounded">
                             <h3 class="font-bold text-sm">Processed Bookings ({{ bookings.length }})</h3>
@@ -403,13 +403,13 @@ const fetchAllData = async () => {
                             </span>
                         </template>
                     </Column>
-                    <Column header="Category" style="width: 15%">
+                    <Column header="Kategorie" style="width: 15%">
                         <template #body="slotProps">
                             <span v-if="slotProps.data.assigned_booking_account_id" class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">
                                 {{ getBookingAccountName(slotProps.data.assigned_booking_account_id) }}
                             </span>
                             <span v-else class="text-orange-400 text-xs flex items-center">
-                                <i class="pi pi-exclamation-triangle mr-1"></i> Unassigned
+                                <i class="pi pi-exclamation-triangle mr-1"></i> Nicht zugeordnet
                             </span>
                         </template>
                     </Column>
@@ -419,7 +419,7 @@ const fetchAllData = async () => {
         </Card>
 
         <!-- Detail Dialog -->
-        <Dialog v-model:visible="detailsVisible" header="Booking Details" :style="{ width: '550px' }" modal class="p-fluid">
+        <Dialog v-model:visible="detailsVisible" header="Buchungsdetails" :style="{ width: '550px' }" modal class="p-fluid">
             <div v-if="selectedBooking" class="flex flex-col gap-4">
                 <div class="grid grid-cols-2 gap-4">
                      <div class="flex flex-col">
@@ -427,7 +427,7 @@ const fetchAllData = async () => {
                         <span class="text-lg">{{ formatDate(selectedBooking.valuta_date) }}</span>
                     </div>
                      <div class="flex flex-col items-end">
-                        <label class="text-sm font-bold text-gray-500">Amount</label>
+                        <label class="text-sm font-bold text-gray-500">Betrag</label>
                         <span :class="{'text-red-600': selectedBooking.amount < 0, 'text-green-600': selectedBooking.amount > 0, 'text-2xl font-bold': true}">
                             {{ formatCurrency(selectedBooking.amount, selectedBooking.currency) }}
                         </span>
@@ -435,7 +435,7 @@ const fetchAllData = async () => {
                 </div>
 
                  <div class="flex flex-col bg-gray-50 p-3 rounded border">
-                    <label class="text-xs font-bold text-gray-500 uppercase mb-1">Recipient / Sender</label>
+                    <label class="text-xs font-bold text-gray-500 uppercase mb-1">Empfänger / Sender</label>
                     <span class="font-semibold text-lg">{{ selectedBooking.client_recipient }}</span>
                     <div class="flex flex-col mt-2 gap-1">
                         <div v-if="selectedBooking.client_iban" class="flex items-center gap-2">
@@ -450,31 +450,31 @@ const fetchAllData = async () => {
                 </div>
                 
                 <div class="flex flex-col">
-                    <label class="text-sm font-bold text-gray-500">Purpose</label>
+                    <label class="text-sm font-bold text-gray-500">Verwendungszweck</label>
                     <p class="bg-gray-50 p-2 rounded text-sm whitespace-pre-wrap leading-relaxed border">{{ selectedBooking.purpose }}</p>
                 </div>
 
                 <div class="border-t pt-4 mt-2">
-                    <h3 class="font-bold mb-3 text-lg text-primary">Accounting Assignment</h3>
+                    <h3 class="font-bold mb-3 text-lg text-primary">Buchungskontenzuordnung</h3>
                     <div class="flex flex-col gap-2">
-                        <label class="text-sm text-gray-600">Assign to Booking Account (Category)</label>
+                        <label class="text-sm text-gray-600">Buchungskonto zuweisen (Kategorie)</label>
                         <Dropdown 
                             v-model="selectedBookingAccountLink" 
                             :options="bookingAccounts" 
                             :optionLabel="getBookingAccountLabel" 
                             optionValue="id"
-                            placeholder="Select Account" 
+                            placeholder="Konto auswählen" 
                             filter
                             showClear
                             class="w-full"
                         />
-                         <small class="text-gray-400">Categorize this transaction for financial reports.</small>
+                         <small class="text-gray-400">Diese Transaktion für Finanzberichte kategorisieren.</small>
                     </div>
                 </div>
             </div>
             <template #footer>
-                <Button label="Cancel" icon="pi pi-times" @click="detailsVisible = false" class="p-button-text" />
-                <Button label="Save Assignment" icon="pi pi-check" @click="saveBookingLink" autofocus />
+                <Button label="Abbrechen" icon="pi pi-times" @click="detailsVisible = false" class="p-button-text" />
+                <Button label="Zuordnung speichern" icon="pi pi-check" @click="saveBookingLink" autofocus />
             </template>
         </Dialog>
     </div>
