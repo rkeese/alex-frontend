@@ -501,6 +501,21 @@ class ApiClient {
         });
     }
 
+    async updateReceipt(id: string, receipt: Receipt): Promise<Receipt> {
+        return this.request<Receipt>(`/finance/receipts/${id}`, {
+            method: 'PUT',
+            headers: this.getHeaders(),
+            body: JSON.stringify(receipt),
+        });
+    }
+
+    async deleteReceipt(id: string): Promise<void> {
+        return this.request<void>(`/finance/receipts/${id}`, {
+            method: 'DELETE',
+            headers: this.getHeaders(),
+        });
+    }
+
     async getBankAccounts(): Promise<BankAccount[]> {
         return this.request<BankAccount[]>('/finance/bank-accounts', {
             headers: this.getHeaders(),

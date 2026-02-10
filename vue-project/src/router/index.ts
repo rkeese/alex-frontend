@@ -96,6 +96,24 @@ const router = createRouter({
           meta: { permission: 'members:read' }
         },
         {
+          path: 'finance/receipts',
+          name: 'finance-receipts',
+          component: () => import('../views/finance/ReceiptListView.vue'),
+          meta: { permission: 'finance:read' }
+        },
+        {
+          path: 'finance/receipts/create',
+          name: 'finance-receipts-create',
+          component: () => import('../views/finance/ReceiptForm.vue'),
+          meta: { permission: 'finance:write' }
+        },
+        {
+          path: 'finance/receipts/:id/edit',
+          name: 'finance-receipts-edit',
+          component: () => import('../views/finance/ReceiptForm.vue'),
+          meta: { permission: 'finance:write' }
+        },
+        {
           path: 'finance/import',
           name: 'finance-import',
           component: () => import('../views/finance/BookingImportView.vue'),

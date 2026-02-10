@@ -139,17 +139,45 @@ export interface BookingAccount {
     minority_list: string;
 }
 
+export interface InvoiceItem {
+    description: string;
+    quantity: number;
+    net_amount: number;
+    tax_rate: number;
+    vat_amount: number;
+    gross_amount: number;
+}
+
 export interface Receipt {
     id?: string;
-    type: string;
+    club_id?: string;
+    type: 'income' | 'expense' | string;
     recipient: string;
     number: string;
     date: string; // YYYY-MM-DD
     position_assignment: string;
     amount: number;
     is_booked: boolean;
-    note: string;
+    note?: string;
+    position_tax_account?: string;
+    position_percentage?: number;
     donor_id?: string;
+
+    // NEW FIELDS
+    seller_name?: string;
+    seller_address?: string;
+    seller_tax_id?: string;
+    seller_vat_id?: string;
+
+    buyer_name?: string;
+    buyer_address?: string;
+    
+    delivery_date?: string; // YYYY-MM-DD
+    total_vat_amount?: number; 
+    invoice_items?: InvoiceItem[];
+    
+    created_at?: string;
+    updated_at?: string;
 }
 
 export interface SepaMember {
