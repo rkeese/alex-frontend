@@ -69,6 +69,24 @@ const bookReceipt = (receipt: Receipt) => {
         accept: async () => {
             if (receipt.id) {
                 try {
+                    // Try to sync recipient before booking if missing
+                    let updated = false;
+                    if (receipt.type === 'expense' && !receipt.recipient && receipt.seller_name) {
+                         receipt.recipient = receipt.seller_name;
+                         updated = true;
+                    } else if (receipt.type === 'income' && !receipt.recipient && receipt.buyer_name) {
+                         receipt.recipient = receipt.buyer_name;
+                         updated = true;
+                    }
+
+                    if (updated) {
+                         try {
+                             await api.updateReceipt(receipt.id, receipt);
+                         } catch (e) {
+                             console.warn('Failed to sync recipient before booking', e);
+                         }
+                    }
+
                     await api.bookReceipt(receipt.id);
                     toast.add({ severity: 'success', summary: 'Erfolg', detail: 'Beleg erfolgreich verbucht', life: 3000 });
                     await loadReceipts();
@@ -114,7 +132,9 @@ const formatCurrency = (amount: number) => {
             </Column>
             <Column field="recipient" header="Empfänger/Käufer" sortable style="width: 30%">
                  <template #body="slotProps">
-                    <span class="font-medium">{{ slotProps.data.buyer_name || slotProps.data.recipient }}</span>
+                    <span class="font-medium">
+                        {{ slotProps.data.type === 'expense' ? (slotProps.data.seller_name || slotProps.data.recipient) : (slotProps.data.buyer_name || slotProps.data.recipient) }}
+                    </span>
                 </template>
             </Column>
             <Column field="amount" header="Brutto Betrag" sortable style="width: 15%">
@@ -133,9 +153,10 @@ const formatCurrency = (amount: number) => {
             <Column header="Aktionen" style="width: 10%">
                 <template #body="slotProps">
                     <div class="flex gap-2">
+                        <Button v-if="slotProps.data.is_booked" icon="pi pi-eye" severity="secondary" text rounded @click="editReceipt(slotProps.data)" aria-label="Ansehen" title="Beleg ansehen" />
                         <Button v-if="!slotProps.data.is_booked" icon="pi pi-check" severity="success" text rounded @click="bookReceipt(slotProps.data)" aria-label="Verbuchen" title="In Buchungsliste übernehmen" />
-                        <Button icon="pi pi-pencil" severity="info" text rounded @click="editReceipt(slotProps.data)" aria-label="Bearbeiten" />
-                        <Button icon="pi pi-trash" severity="danger" text rounded @click="deleteReceipt(slotProps.data)" aria-label="Löschen" />
+                        <Button v-if="!slotProps.data.is_booked" icon="pi pi-pencil" severity="info" text rounded @click="editReceipt(slotProps.data)" aria-label="Bearbeiten" />
+                        <Button v-if="!slotProps.data.is_booked" icon="pi pi-trash" severity="danger" text rounded @click="deleteReceipt(slotProps.data)" aria-label="Löschen" />
                     </div>
                 </template>
             </Column>

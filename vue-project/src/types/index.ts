@@ -156,7 +156,7 @@ export interface Receipt {
     recipient: string;
     number: string;
     date: string; // YYYY-MM-DD
-    position_assignment: string;
+    position_assignment?: string | null;
     amount: number;
     is_booked: boolean;
     note?: string;

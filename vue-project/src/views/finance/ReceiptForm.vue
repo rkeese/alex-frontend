@@ -20,6 +20,7 @@ const router = useRouter();
 const authStore = useAuthStore();
 
 const isEditMode = computed(() => route.params.id !== 'create' && !!route.params.id);
+const isReadOnly = computed(() => receipt.value.is_booked);
 const loading = ref(false);
 const saving = ref(false);
 
@@ -28,7 +29,7 @@ const receipt = ref<Receipt>({
     recipient: '',
     number: '',
     date: new Date().toISOString().split('T')[0], // Initially string, but bound to Calendar which might convert to Date object
-    position_assignment: '',
+    position_assignment: null,
     amount: 0,
     is_booked: false,
     note: '',
@@ -162,10 +163,11 @@ const calculateTotals = () => {
     receipt.value.amount = parseFloat(totalGross.toFixed(2));
 };
 
-// Sync buyer name to recipient (legacy)
-watch(() => receipt.value.buyer_name, (newVal) => {
-    if (newVal) receipt.value.recipient = newVal;
-});
+// Sync buyer name to recipient (legacy) but only if not saving handle it there
+// Old watcher removed to prevent overwrite during typing
+// watch(() => receipt.value.buyer_name, (newVal) => {
+//    if (newVal) receipt.value.recipient = newVal;
+// });
 
 const save = async () => {
     // Validation
@@ -182,6 +184,13 @@ const save = async () => {
         return;
     }
     
+    // Set recipient legacy field
+    if (receipt.value.type === 'expense') {
+        receipt.value.recipient = receipt.value.seller_name || '';
+    } else {
+        receipt.value.recipient = receipt.value.buyer_name || '';
+    }
+
     saving.value = true;
     try {
         if (deliveryDateSame.value) {
@@ -207,10 +216,10 @@ const save = async () => {
     <div class="card max-w-6xl mx-auto pb-10">
         <!-- Sticky Header -->
         <div class="flex sticky top-0 bg-white dark:bg-gray-900 z-10 py-4 border-b border-gray-200 dark:border-gray-700 justify-between items-center mb-6">
-            <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">{{ isEditMode ? 'Beleg bearbeiten' : 'Neuer Beleg' }}</h1>
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">{{ isReadOnly ? 'Beleg ansehen' : (isEditMode ? 'Beleg bearbeiten' : 'Neuer Beleg') }}</h1>
             <div class="flex gap-2">
                 <Button label="Zurück" icon="pi pi-arrow-left" severity="secondary" @click="router.back()" />
-                <Button label="Speichern" icon="pi pi-check" @click="save" :loading="saving" />
+                <Button v-if="!isReadOnly" label="Speichern" icon="pi pi-check" @click="save" :loading="saving" />
             </div>
         </div>
         
@@ -220,24 +229,24 @@ const save = async () => {
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="field">
                         <label for="number" class="font-bold block mb-2">Belegnummer *</label>
-                        <InputText id="number" v-model="receipt.number" required />
+                        <InputText id="number" v-model="receipt.number" required :disabled="isReadOnly" />
                     </div>
                     <div class="field">
                         <label for="type" class="font-bold block mb-2">Typ *</label>
-                        <Dropdown id="type" v-model="receipt.type" :options="typeOptions" optionLabel="label" optionValue="value" />
+                        <Dropdown id="type" v-model="receipt.type" :options="typeOptions" optionLabel="label" optionValue="value" :disabled="isReadOnly" />
                     </div>
                     <div class="field">
                         <label for="date" class="font-bold block mb-2">Rechnungsdatum *</label>
-                        <Calendar id="date" v-model="receiptDate" dateFormat="dd.mm.yy" showIcon />
+                        <Calendar id="date" v-model="receiptDate" dateFormat="dd.mm.yy" showIcon :disabled="isReadOnly" />
                     </div>
 
                     <div class="field md:col-span-2">
                         <label for="delivery_date" class="font-bold block mb-2">Lieferdatum</label>
                         <div class="flex items-center mb-2">
-                            <Checkbox v-model="deliveryDateSame" :binary="true" inputId="deliverySame" />
+                            <Checkbox v-model="deliveryDateSame" :binary="true" inputId="deliverySame" :disabled="isReadOnly" />
                             <label for="deliverySame" class="ml-2">Identisch mit Rechnungsdatum</label>
                         </div>
-                        <Calendar v-if="!deliveryDateSame" id="delivery_date" v-model="deliveryDate" dateFormat="dd.mm.yy" showIcon />
+                        <Calendar v-if="!deliveryDateSame" id="delivery_date" v-model="deliveryDate" dateFormat="dd.mm.yy" showIcon :disabled="isReadOnly" />
                     </div>
                 </div>
             </Panel>
@@ -253,20 +262,20 @@ const save = async () => {
                          <div class="flex flex-col gap-3">
                             <div class="field">
                                 <label class="font-bold block mb-2">Name *</label>
-                                <InputText v-model="receipt.seller_name" />
+                                <InputText v-model="receipt.seller_name" :disabled="isReadOnly" />
                             </div>
                             <div class="field">
                                 <label class="font-bold block mb-2">Adresse</label>
-                                <Textarea v-model="receipt.seller_address" rows="3" autoResize />
+                                <Textarea v-model="receipt.seller_address" rows="3" autoResize :disabled="isReadOnly" />
                             </div>
                             <div class="grid grid-cols-2 gap-3">
                                 <div class="field">
                                     <label class="font-bold block mb-2">Steuer-Nr.</label>
-                                    <InputText v-model="receipt.seller_tax_id" />
+                                    <InputText v-model="receipt.seller_tax_id" :disabled="isReadOnly" />
                                 </div>
                                 <div class="field">
                                     <label class="font-bold block mb-2">USt-ID</label>
-                                    <InputText v-model="receipt.seller_vat_id" />
+                                    <InputText v-model="receipt.seller_vat_id" :disabled="isReadOnly" />
                                 </div>
                             </div>
                          </div>
@@ -278,11 +287,11 @@ const save = async () => {
                          <div class="flex flex-col gap-3">
                             <div class="field">
                                 <label class="font-bold block mb-2">Name</label>
-                                <InputText v-model="receipt.buyer_name" />
+                                <InputText v-model="receipt.buyer_name" :disabled="isReadOnly" />
                             </div>
                             <div class="field">
                                 <label class="font-bold block mb-2">Adresse</label>
-                                <Textarea v-model="receipt.buyer_address" rows="3" autoResize />
+                                <Textarea v-model="receipt.buyer_address" rows="3" autoResize :disabled="isReadOnly" />
                             </div>
                         </div>
                     </div>
@@ -297,22 +306,22 @@ const save = async () => {
                              <div class="col-span-12 md:col-span-4 field">
                                  <label v-if="index===0" class="font-bold block mb-2">Beschreibung</label>
                                  <span v-else class="md:hidden font-bold block mb-1">Beschreibung</span>
-                                 <Textarea v-model="item.description" placeholder="Position..." rows="1" autoResize />
+                                 <Textarea v-model="item.description" placeholder="Position..." rows="1" autoResize :disabled="isReadOnly" />
                              </div>
                              <div class="col-span-12 md:col-span-2 field">
                                  <label v-if="index===0" class="font-bold block mb-2">Menge</label>
                                  <span v-else class="md:hidden font-bold block mb-1">Menge</span>
-                                 <InputNumber v-model="item.quantity" :min="0" :minFractionDigits="0" showButtons @update:modelValue="calculateTotals" />
+                                 <InputNumber v-model="item.quantity" :min="0" :minFractionDigits="0" showButtons @update:modelValue="calculateTotals" :disabled="isReadOnly" />
                              </div>
                               <div class="col-span-12 md:col-span-2 field">
                                  <label v-if="index===0" class="font-bold block mb-2">Einzel (Netto)</label>
                                  <span v-else class="md:hidden font-bold block mb-1">Einzel (Netto)</span>
-                                 <InputNumber v-model="item.net_amount" mode="currency" currency="EUR" @update:modelValue="calculateTotals" />
+                                 <InputNumber v-model="item.net_amount" mode="currency" currency="EUR" @update:modelValue="calculateTotals" :disabled="isReadOnly" />
                              </div>
                              <div class="col-span-12 md:col-span-2 field">
                                   <label v-if="index===0" class="font-bold block mb-2">Steuer</label>
                                   <span v-else class="md:hidden font-bold block mb-1">Steuer</span>
-                                  <Dropdown v-model="item.tax_rate" :options="taxRates" class="w-full" @change="calculateTotals">
+                                  <Dropdown v-model="item.tax_rate" :options="taxRates" class="w-full" @change="calculateTotals" :disabled="isReadOnly">
                                     <template #value="slotProps">
                                         {{ slotProps.value }}%
                                     </template>
@@ -326,13 +335,13 @@ const save = async () => {
                                   <span v-else class="md:hidden font-bold block mb-1">Brutto</span>
                                   <div class="flex gap-2">
                                     <InputNumber v-model="item.gross_amount" mode="currency" currency="EUR" disabled class="flex-1" />
-                                    <Button icon="pi pi-trash" severity="danger" text @click="removeItem(index)" title="Entfernen" />
+                                    <Button v-if="!isReadOnly" icon="pi pi-trash" severity="danger" text @click="removeItem(index)" title="Entfernen" />
                                   </div>
                              </div>
                          </div>
                     </div>
                     
-                    <div class="flex justify-start">
+                    <div v-if="!isReadOnly" class="flex justify-start">
                         <Button label="Position hinzufügen" icon="pi pi-plus" size="small" severity="secondary" @click="addItem" />
                     </div>
                     
@@ -350,7 +359,7 @@ const save = async () => {
 
                      <div class="field">
                          <label class="font-bold block mb-2">Interne Notiz</label>
-                         <Textarea v-model="receipt.note" rows="3" autoResize placeholder="Optionale Notiz für die Buchhaltung..." />
+                         <Textarea v-model="receipt.note" rows="3" autoResize placeholder="Optionale Notiz für die Buchhaltung..." :disabled="isReadOnly" />
                      </div>
                  </div>
              </Panel>
