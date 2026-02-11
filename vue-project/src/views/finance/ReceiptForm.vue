@@ -2,7 +2,7 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { api } from '@/services/api';
-import type { Receipt, InvoiceItem, Club, BookingAccount } from '@/types';
+import type { Receipt, InvoiceItem, Club } from '@/types';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
@@ -43,14 +43,7 @@ const receipt = ref<Receipt>({
 });
 
 const deliveryDateSame = ref(true);
-const bookingAccounts = ref<BookingAccount[]>([]);
 
-const bookingAccountOptions = computed(() => {
-    return bookingAccounts.value.map(ba => ({
-        label: `${ba.minority_list} ${ba.minority_list_description || ''}`,
-        value: ba.majority_list // Or ba.majority_list if backend expects string name, but ID is safer if supported
-    }));
-});
 
 const typeOptions = [
     { label: 'Einnahme', value: 'income' },
@@ -84,7 +77,6 @@ const deliveryDate = computed({
 });
 
 onMounted(async () => {
-    await loadBookingAccounts();
     if (isEditMode.value) {
         await loadReceipt();
     } else {
@@ -93,16 +85,7 @@ onMounted(async () => {
     }
 });
 
-const loadBookingAccounts = async () => {
-    try {
-        const accounts = await api.getBookingAccounts();
-        if (accounts) {
-            bookingAccounts.value = accounts;
-        }
-    } catch (e) {
-        console.error('Failed to load booking accounts', e);
-    }
-};
+
 
 const loadReceipt = async () => {
     loading.value = true;
@@ -247,10 +230,7 @@ const save = async () => {
                         <label for="date" class="font-bold block mb-2">Rechnungsdatum *</label>
                         <Calendar id="date" v-model="receiptDate" dateFormat="dd.mm.yy" showIcon />
                     </div>
-                    <div class="field">
-                        <label for="assignment" class="font-bold block mb-2">Kategorie</label>
-                        <Dropdown id="assignment" v-model="receipt.position_assignment" :options="bookingAccountOptions" optionLabel="label" optionValue="value" placeholder="Bitte wählen..." filter />
-                    </div>
+
                     <div class="field md:col-span-2">
                         <label for="delivery_date" class="font-bold block mb-2">Lieferdatum</label>
                         <div class="flex items-center mb-2">
@@ -367,10 +347,7 @@ const save = async () => {
              <!-- Section 4: Settings -->
              <Panel header="Einstellungen & Notizen" toggleable>
                  <div class="grid grid-cols-1 gap-4">
-                     <div class="field flex items-center gap-2">
-                         <Checkbox v-model="receipt.is_booked" binary inputId="isBooked" />
-                         <label for="isBooked" class="font-bold">In Buchungsliste übernehmen (Bereits verbucht)</label>
-                     </div>
+
                      <div class="field">
                          <label class="font-bold block mb-2">Interne Notiz</label>
                          <Textarea v-model="receipt.note" rows="3" autoResize placeholder="Optionale Notiz für die Buchhaltung..." />

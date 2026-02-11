@@ -14,7 +14,7 @@ const receipts = ref<Receipt[]>([]);
 const loading = ref(true);
 const router = useRouter();
 const confirm = useConfirm();
-// const toast = useToast(); // If Toast is available
+const toast = useToast();
 
 onMounted(async () => {
     loadReceipts();
@@ -50,9 +50,31 @@ const deleteReceipt = (receipt: Receipt) => {
             if (receipt.id) {
                 try {
                     await api.deleteReceipt(receipt.id);
+                    toast.add({ severity: 'success', summary: 'Erfolg', detail: 'Beleg gelöscht', life: 3000 });
                     await loadReceipts();
                 } catch (error) {
                     console.error('Failed to delete receipt', error);
+                    toast.add({ severity: 'error', summary: 'Fehler', detail: 'Fehler beim Löschen des Belegs', life: 3000 });
+                }
+            }
+        }
+    });
+};
+
+const bookReceipt = (receipt: Receipt) => {
+    confirm.require({
+        message: 'Möchten Sie diesen Beleg wirklich verbuchen? Dies erstellt eine Buchung und aktualisiert den Status.',
+        header: 'Verbuchen',
+        icon: 'pi pi-question-circle',
+        accept: async () => {
+            if (receipt.id) {
+                try {
+                    await api.bookReceipt(receipt.id);
+                    toast.add({ severity: 'success', summary: 'Erfolg', detail: 'Beleg erfolgreich verbucht', life: 3000 });
+                    await loadReceipts();
+                } catch (error) {
+                    console.error('Failed to book receipt', error);
+                    toast.add({ severity: 'error', summary: 'Fehler', detail: 'Fehler beim Verbuchen des Belegs', life: 3000 });
                 }
             }
         }
@@ -111,6 +133,7 @@ const formatCurrency = (amount: number) => {
             <Column header="Aktionen" style="width: 10%">
                 <template #body="slotProps">
                     <div class="flex gap-2">
+                        <Button v-if="!slotProps.data.is_booked" icon="pi pi-check" severity="success" text rounded @click="bookReceipt(slotProps.data)" aria-label="Verbuchen" title="In Buchungsliste übernehmen" />
                         <Button icon="pi pi-pencil" severity="info" text rounded @click="editReceipt(slotProps.data)" aria-label="Bearbeiten" />
                         <Button icon="pi pi-trash" severity="danger" text rounded @click="deleteReceipt(slotProps.data)" aria-label="Löschen" />
                     </div>

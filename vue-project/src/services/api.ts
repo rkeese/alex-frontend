@@ -509,6 +509,13 @@ class ApiClient {
         });
     }
 
+    async bookReceipt(id: string): Promise<void> {
+        return this.request<void>(`/finance/receipts/${id}/book`, {
+            method: 'POST',
+            headers: this.getHeaders(),
+        });
+    }
+
     async deleteReceipt(id: string): Promise<void> {
         return this.request<void>(`/finance/receipts/${id}`, {
             method: 'DELETE',
