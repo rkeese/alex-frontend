@@ -320,3 +320,44 @@ export interface BookingsResponse {
     start_amount: number;
     end_amount: number;
 }
+
+export interface BankBalance {
+    name: string;
+    startBalance: number;
+    income: number;
+    expense: number;
+    endBalance: number;
+}
+
+export interface OverviewItem {
+    name: string;
+    income: number;
+    expense: number;
+    result: number;
+}
+
+export interface BookingDetail {
+    date: string;
+    bookingText: string;
+    purpose: string;
+    amount: number;
+}
+
+export interface FinanceStatementData {
+    clubName: string;
+    year: number;
+    bankBalances: BankBalance[];
+    totalBankBalance: BankBalance;
+    overview: OverviewItem[];
+    totalOverview: OverviewItem;
+    details: { [key: string]: BookingDetail[] };
+}
+
+export interface FinanceStatement {
+    id: string;
+    club_id: string;
+    year: number;
+    data: FinanceStatementData;
+    created_at: string;
+    updated_at?: string;
+}

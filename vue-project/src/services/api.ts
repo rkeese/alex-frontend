@@ -18,7 +18,8 @@ import type {
     BoardMemberUpdateRequest,
     Role,
     BookingImportResponse,
-    Booking
+    Booking,
+    FinanceStatement,
 } from '../types';
 
 const BASE_URL = '/api/v1';
@@ -547,6 +548,42 @@ class ApiClient {
         return this.request<BankAccount>(`/finance/bank-accounts/${id}`, {
             headers: this.getHeaders(),
         });
+    }
+
+    async createFinanceStatement(year: number, initialBalances?: Record<string, number>): Promise<FinanceStatement> {
+        return this.request<FinanceStatement>('/finance/statements', {
+            method: 'POST',
+            headers: this.getHeaders(),
+            body: JSON.stringify({ year, initial_balances: initialBalances }),
+        });
+    }
+
+    async getFinanceStatements(): Promise<FinanceStatement[]> {
+        return this.request<FinanceStatement[]>('/finance/statements', {
+            headers: this.getHeaders(),
+        });
+    }
+
+    async getFinanceStatement(id: string): Promise<FinanceStatement> {
+        return this.request<FinanceStatement>(`/finance/statements/${id}`, {
+            headers: this.getHeaders(),
+        });
+    }
+
+    async deleteFinanceStatement(id: string): Promise<void> {
+        return this.request<void>(`/finance/statements/${id}`, {
+            method: 'DELETE',
+            headers: this.getHeaders(),
+        });
+    }
+
+    async getFinanceStatementPdf(id: string): Promise<Blob> {
+        const response = await fetch(`${BASE_URL}/finance/statements/${id}/pdf`, {
+            headers: this.getHeaders(),
+        });
+        
+        if (!response.ok) throw new Error('PDF Download failed');
+        return response.blob();
     }
 
     async updateBankAccount(id: string, account: BankAccount): Promise<BankAccount> {

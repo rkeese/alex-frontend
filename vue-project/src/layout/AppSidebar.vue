@@ -42,7 +42,8 @@ const items = computed(() => {
             items: [
                 { label: 'Bankimport', icon: 'pi pi-upload', command: () => router.push('/finance/import') },
                 { label: 'Buchungen', icon: 'pi pi-list', command: () => router.push('/finance/bookings') },
-                { label: 'Belege', icon: 'pi pi-receipt', command: () => router.push('/finance/receipts') }
+                { label: 'Belege', icon: 'pi pi-receipt', command: () => router.push('/finance/receipts') },
+                { label: 'Jahresabschluss', icon: 'pi pi-file-pdf', command: () => router.push('/finance/statements') }
             ]
         } as any); // Type assertion for nested items if needed, or structured correctly
     }

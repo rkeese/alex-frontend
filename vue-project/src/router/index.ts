@@ -101,8 +101,12 @@ const router = createRouter({
           component: () => import('../views/finance/ReceiptListView.vue'),
           meta: { permission: 'finance:read' }
         },
-        {
-          path: 'finance/receipts/create',
+        {          path: 'finance/statements',
+          name: 'finance-statements',
+          component: () => import('../views/finance/FinanceStatementView.vue'),
+          meta: { permission: 'finance:read' }
+        },
+        {          path: 'finance/receipts/create',
           name: 'finance-receipts-create',
           component: () => import('../views/finance/ReceiptForm.vue'),
           meta: { permission: 'finance:write' }
