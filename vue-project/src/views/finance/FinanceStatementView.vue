@@ -182,7 +182,7 @@ const downloadPdf = async () => {
             <div class="flex flex-col gap-4">
                 <p>Bitte geben Sie die Anfangsbestände für das Jahr {{ year }} an.</p>
                 
-                <div class="grid grid-cols-2 gap-4">
+                <div class="flex flex-col gap-4">
                     <div v-for="bank in bankAccounts" :key="bank.id" class="flex flex-col gap-2">
                         <label :for="'bank-' + bank.id">{{ bank.name }} ({{ bank.iban }})</label>
                         <InputNumber :id="'bank-' + bank.id" v-model="startBalances[bank.id!]" mode="currency" currency="EUR" locale="de-DE" />
