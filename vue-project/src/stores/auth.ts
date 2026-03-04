@@ -5,9 +5,9 @@ import type { LoginRequest, RegisterRequest } from '@/types';
 import { jwtDecode } from "jwt-decode";
 
 export const useAuthStore = defineStore('auth', () => {
-    const token = ref(localStorage.getItem('token') || '');
-    const clubId = ref(localStorage.getItem('clubId') || '');
-    const clubName = ref(localStorage.getItem('clubName') || '');
+    const token = ref(sessionStorage.getItem('token') || '');
+    const clubId = ref(sessionStorage.getItem('clubId') || '');
+    const clubName = ref(sessionStorage.getItem('clubName') || '');
     const permissions = ref<Set<string>>(new Set());
     const roles = ref<Set<string>>(new Set());
     const isSystemAdmin = ref(false);
@@ -189,7 +189,7 @@ export const useAuthStore = defineStore('auth', () => {
         try {
             const response = await api.login(credentials);
             token.value = response.token;
-            localStorage.setItem('token', response.token);
+            sessionStorage.setItem('token', response.token);
             
             processToken(response.token);
 
@@ -199,8 +199,8 @@ export const useAuthStore = defineStore('auth', () => {
                 if (clubs.length > 0 && clubs[0].id) {
                     clubId.value = clubs[0].id;
                     clubName.value = clubs[0].name;
-                    localStorage.setItem('clubId', clubId.value);
-                    localStorage.setItem('clubName', clubName.value);
+                    sessionStorage.setItem('clubId', clubId.value);
+                    sessionStorage.setItem('clubName', clubName.value);
                 }
             } catch (e) {
                 console.error('Failed to fetch clubs after login', e);
@@ -217,7 +217,7 @@ export const useAuthStore = defineStore('auth', () => {
         try {
             const response = await api.register(data);
             token.value = response.token;
-            localStorage.setItem('token', response.token);
+            sessionStorage.setItem('token', response.token);
             processToken(response.token);
             return true;
         } catch (error) {
@@ -235,16 +235,16 @@ export const useAuthStore = defineStore('auth', () => {
         isSystemAdmin.value = false;
         userEmail.value = '';
         userName.value = '';
-        localStorage.removeItem('token');
-        localStorage.removeItem('clubId');
-        localStorage.removeItem('clubName');
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('clubId');
+        sessionStorage.removeItem('clubName');
     }
 
     function setClub(id: string, name: string) {
         clubId.value = id;
         clubName.value = name;
-        localStorage.setItem('clubId', id);
-        localStorage.setItem('clubName', name);
+        sessionStorage.setItem('clubId', id);
+        sessionStorage.setItem('clubName', name);
     }
 
     return { token, clubId, clubName, isAuthenticated, permissions, roles, isSystemAdmin, userEmail, userName, mustChangePassword, userId, userRoleLabel, hasPermission, login, register, logout, setClub };

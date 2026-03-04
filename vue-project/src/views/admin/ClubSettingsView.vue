@@ -49,7 +49,7 @@ const isNewBankAccount = ref(true);
 const loadData = async () => {
     loading.value = true;
     try {
-        const clubId = localStorage.getItem('clubId');
+        const clubId = sessionStorage.getItem('clubId');
         if (clubId) {
              club.value = await api.getClub(clubId);
              departments.value = await api.getDepartments();

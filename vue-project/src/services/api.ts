@@ -30,13 +30,13 @@ class ApiClient {
             'Content-Type': 'application/json',
         };
 
-        const token = localStorage.getItem('token');
+        const token = sessionStorage.getItem('token');
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
         }
 
         if (includeClubId) {
-            const clubId = localStorage.getItem('clubId');
+            const clubId = sessionStorage.getItem('clubId');
             if (clubId) {
                 headers['X-Club-ID'] = clubId;
             }
@@ -397,7 +397,7 @@ class ApiClient {
         // @ts-ignore
         delete headers['Content-Type'];
 
-        const clubId = localStorage.getItem('clubId');
+        const clubId = sessionStorage.getItem('clubId');
         const url = clubId 
             ? `${BASE_URL}/members/import?club_id=${clubId}`
             : `${BASE_URL}/members/import`;

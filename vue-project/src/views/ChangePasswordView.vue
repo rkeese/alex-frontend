@@ -40,7 +40,7 @@ const changePassword = async () => {
         toast.add({ severity: 'success', summary: 'Erfolg', detail: 'Passwort erfolgreich geändert. Bitte melden Sie sich erneut an.', life: 5000 });
         
         // Logout to ensure token is refreshed on next login
-        // (Old token in localStorage still claims must_change_password=true)
+        // (Old token in sessionStorage still claims must_change_password=true)
         authStore.logout();
         router.push('/login');
     } catch (e: any) {

@@ -34,7 +34,7 @@ const switchClub = (club: Club) => {
     if (club.id) {
         authStore.setClub(club.id, club.name);
         // Force reload of page or at least notify user. 
-        // Since many views depend on the clubId in the store/localstorage, 
+        // Since many views depend on the clubId in the store/sessionstorage, 
         // simplest is often just staying here but visual update.
     }
 };
