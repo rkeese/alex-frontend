@@ -120,6 +120,7 @@ const exportMembers = async () => {
         </div>
 
         <DataTable :value="members" :loading="loading" paginator :rows="10" :rowsPerPageOptions="[5, 10, 20, 50]"
+            stateStorage="session" stateKey="dt-state-member-list"
             tableStyle="min-width: 50rem" stripedRows class="p-datatable-sm">
             <template #empty> Keine Mitglieder gefunden. </template>
             <Column field="member_number" header="Nr." sortable style="width: 10%"></Column>
