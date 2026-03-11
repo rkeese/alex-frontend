@@ -355,7 +355,7 @@ const saveMember = async () => {
     validationError.value = '';
 
     // Frontend Validation
-    const requiredFields: (keyof Member)[] = ['member_number', 'status', 'first_name', 'last_name', 'email', 'joined_at'];
+    const requiredFields: (keyof Member)[] = ['member_number', 'status', 'first_name', 'last_name', 'email', 'joined_at', 'birth_date', 'street_house_number', 'postal_code', 'city'];
     const missing = requiredFields.filter(field => !member.value[field]);
 
     if (missing.length > 0) {
@@ -442,7 +442,7 @@ const saveMember = async () => {
                     </div>
 
                     <div class="field">
-                        <label for="birth_date" class="font-bold block mb-2">Geburtsdatum</label>
+                        <label for="birth_date" class="font-bold block mb-2">Geburtsdatum *</label>
                         <InputText id="birth_date" v-model="member.birth_date" type="date" />
                     </div>
                     <div class="field">
@@ -460,15 +460,15 @@ const saveMember = async () => {
             <Panel header="Adresse & Kontakt" toggleable class="mb-4">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="field md:col-span-2">
-                        <label for="street" class="font-bold block mb-2">Straße & Hausnummer</label>
+                        <label for="street" class="font-bold block mb-2">Straße & Hausnummer *</label>
                         <InputText id="street" v-model="member.street_house_number" />
                     </div>
                      <div class="field">
-                        <label for="postal_code" class="font-bold block mb-2">PLZ</label>
+                        <label for="postal_code" class="font-bold block mb-2">PLZ *</label>
                         <InputText id="postal_code" v-model="member.postal_code" />
                     </div>
                     <div class="field">
-                        <label for="city" class="font-bold block mb-2">Stadt</label>
+                        <label for="city" class="font-bold block mb-2">Stadt *</label>
                         <InputText id="city" v-model="member.city" />
                     </div>
                     <div class="field">
