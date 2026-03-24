@@ -46,13 +46,13 @@ const fetchDashboardData = async () => {
 
     const todayStr = new Date().toISOString().split('T')[0];
     const upcoming = events
-      .filter(e => e.date >= todayStr)
-      .sort((a, b) => a.date.localeCompare(b.date));
+      .filter(e => e.date && e.date >= todayStr!)
+      .sort((a, b) => (a.date || '').localeCompare(b.date || ''));
 
     upcomingEventsCount.value = upcoming.length;
-    if (upcoming.length > 0) {
-      nextEventDisplay.value = upcoming[0].description;
-      nextEventDate.value = formatDate(upcoming[0].date);
+    if (upcoming.length > 0 && upcoming[0]) {
+      nextEventDisplay.value = upcoming[0].description || '';
+      nextEventDate.value = formatDate(upcoming[0].date || '');
     } else {
       nextEventDisplay.value = '';
       nextEventDate.value = '';

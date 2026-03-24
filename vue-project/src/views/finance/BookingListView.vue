@@ -187,7 +187,7 @@ const saveBookingLink = async () => {
         // Update local model to reflect change immediately
         selectedBooking.value.assigned_booking_account_id = selectedBookingAccountLink.value;
         const idx = bookings.value.findIndex(b => b.id === selectedBooking.value?.id);
-        if (idx !== -1) {
+        if (idx !== -1 && bookings.value[idx]) {
             bookings.value[idx].assigned_booking_account_id = selectedBookingAccountLink.value;
         }
 
@@ -424,7 +424,7 @@ const fetchAllData = async () => {
                 <div class="grid grid-cols-2 gap-4">
                      <div class="flex flex-col">
                         <label class="text-sm font-bold text-gray-500">Valuta</label>
-                        <span class="text-lg">{{ formatDate(selectedBooking.valuta_date) }}</span>
+                        <span class="text-lg">{{ formatDate(selectedBooking.valuta_date || '') }}</span>
                     </div>
                      <div class="flex flex-col items-end">
                         <label class="text-sm font-bold text-gray-500">Betrag</label>

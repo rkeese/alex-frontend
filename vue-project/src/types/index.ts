@@ -122,7 +122,7 @@ export interface BoardMemberUpdateRequest {
 export interface Role {
     id: string;
     name: string;
-    created_at: string;
+    created_at?: string;
 }
 
 export interface Department {
@@ -260,11 +260,12 @@ export interface User {
     roles?: (string | { name?: string; role?: string; club_id?: string })[];
 }
 
-export interface Role {
-    id: string;
-    name: string;
-    created_at?: string;
-}
+// Remove duplicate Role interface since it is defined on line 125
+// export interface Role {
+//     id: string;
+//     name: string;
+//     created_at?: string;
+// }
 
 export interface AssignRoleRequest {
     user_id: string;

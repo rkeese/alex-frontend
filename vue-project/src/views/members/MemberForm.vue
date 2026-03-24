@@ -53,7 +53,7 @@ const member = ref<Member>({
     letter_salutation: '',
     
     // Membership
-    joined_at: new Date().toISOString().split('T')[0],
+    joined_at: new Date().toISOString().split('T')[0] as string,
     left_at: '',
     
     // Fees (New Structure)
@@ -64,7 +64,7 @@ const member = ref<Member>({
     creditor_account_id: '',
     assigned_club_bank_id: '',
     fee_maturity: '',
-    fee_starts_at: new Date().toISOString().split('T')[0],
+    fee_starts_at: new Date().toISOString().split('T')[0] as string,
     
     // Legacy Contribution (kept for compatibility if needed, but UI will focus on Fees)
     contribution_name: '',
@@ -294,7 +294,7 @@ watch(
 const formatDate = (dateString: string | undefined): string => {
     if (!dateString) return '';
     if (dateString.includes('T')) {
-        return dateString.split('T')[0];
+        return dateString.split('T')[0] as string;
     }
     return dateString;
 };
@@ -344,8 +344,10 @@ watch(() => member.value.mandate_granted_at, (newVal) => {
          // Default to +3 years
          try {
              const d = new Date(newVal);
-             d.setFullYear(d.getFullYear() + 3);
-             member.value.mandate_valid_until = d.toISOString().split('T')[0];
+             if (!isNaN(d.getTime())) {
+                 d.setFullYear(d.getFullYear() + 3);
+                 member.value.mandate_valid_until = d.toISOString().split('T')[0] as string;
+             }
          } catch (e) { /* ignore invalid date */ }
     }
 });
@@ -370,8 +372,10 @@ const saveMember = async () => {
     if (member.value.sepa_mandate_granted && member.value.mandate_granted_at && !member.value.mandate_valid_until) {
          try {
              const d = new Date(member.value.mandate_granted_at);
-             d.setFullYear(d.getFullYear() + 3);
-             member.value.mandate_valid_until = d.toISOString().split('T')[0];
+             if (!isNaN(d.getTime())) {
+                 d.setFullYear(d.getFullYear() + 3);
+                 member.value.mandate_valid_until = d.toISOString().split('T')[0] as string;
+             }
          } catch(e) {}
     }
 

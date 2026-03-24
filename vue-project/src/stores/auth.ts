@@ -196,9 +196,9 @@ export const useAuthStore = defineStore('auth', () => {
             // Fetch clubs and set default
             try {
                 const clubs = await api.getClubs();
-                if (clubs.length > 0 && clubs[0].id) {
+                if (clubs && clubs.length > 0 && clubs[0] && clubs[0].id) {
                     clubId.value = clubs[0].id;
-                    clubName.value = clubs[0].name;
+                    clubName.value = clubs[0].name || '';
                     sessionStorage.setItem('clubId', clubId.value);
                     sessionStorage.setItem('clubName', clubName.value);
                 }
@@ -252,7 +252,10 @@ export const useAuthStore = defineStore('auth', () => {
 
 function parseJwt (token: string) {
     try {
-        const base64Url = token.split('.')[1];
+        const parts = token.split('.');
+        if (parts.length < 2) return {};
+        const base64Url = parts[1];
+        if (!base64Url) return {};
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
         const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
             return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);

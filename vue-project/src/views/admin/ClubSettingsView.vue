@@ -187,8 +187,14 @@ onMounted(() => {
             </div>
         </div>
 
-        <TabView>
-            <TabPanel header="Allgemein">
+        <Tabs value="0">
+            <TabList>
+                <Tab value="0">Allgemein</Tab>
+                <Tab value="1">Abteilungen</Tab>
+                <Tab value="2">Bankkonten</Tab>
+            </TabList>
+            <TabPanels>
+            <TabPanel value="0">
                 <Fluid>
                     <!-- Club Information -->
                     <Panel header="Vereinsdaten" toggleable class="mb-4">
@@ -250,7 +256,7 @@ onMounted(() => {
                 </Fluid>
             </TabPanel>
 
-            <TabPanel header="Abteilungen">
+            <TabPanel value="1">
                  <div class="flex justify-end mb-4">
                     <Button label="Neue Abteilung" icon="pi pi-plus" @click="openNewDepartment" />
                 </div>
@@ -268,7 +274,7 @@ onMounted(() => {
                 </DataTable>
             </TabPanel>
 
-            <TabPanel header="Bankkonten">
+            <TabPanel value="2">
                  <div class="flex justify-end mb-4">
                     <Button label="Neues Konto" icon="pi pi-plus" @click="openNewBankAccount" />
                 </div>
@@ -291,7 +297,8 @@ onMounted(() => {
                     </Column>
                 </DataTable>
             </TabPanel>
-        </TabView>
+            </TabPanels>
+        </Tabs>
 
         <!-- Department Dialog -->
         <Dialog v-model:visible="departmentDialog" :header="isNewDepartment ? 'Neue Abteilung' : 'Abteilung bearbeiten'" :modal="true" :style="{ width: '450px' }" class="p-fluid">

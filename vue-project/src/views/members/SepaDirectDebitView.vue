@@ -29,7 +29,7 @@ const groupedMembers = computed(() => {
     return Object.entries(groups).map(([iban, groupMembers]) => {
         const first = groupMembers[0];
         // Prefer bank name, fallback to holder
-        let displayName = first.target_bank_name || first.target_account_holder;
+        let displayName = first ? (first.target_bank_name || first.target_account_holder) : '';
         if (!displayName) displayName = 'Unbekanntes Konto';
         
         return {

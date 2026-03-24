@@ -28,7 +28,7 @@ const receipt = ref<Receipt>({
     type: 'expense',
     recipient: '',
     number: '',
-    date: new Date().toISOString().split('T')[0], // Initially string, but bound to Calendar which might convert to Date object
+    date: new Date().toISOString().split('T')[0] as string, // Initially string, but bound to Calendar which might convert to Date object
     position_assignment: null,
     amount: 0,
     is_booked: false,
@@ -55,8 +55,9 @@ const taxRates = [0, 7, 19];
 
 const toDate = (str: string | undefined): Date | undefined => {
     if (!str) return undefined;
-    const [y, m, d] = str.split('-').map(Number);
-    return new Date(y, m - 1, d);
+    const parts = str.split('-').map(Number);
+    if (parts.length !== 3 || parts.some(isNaN)) return undefined;
+    return new Date(parts[0]!, parts[1]! - 1, parts[2]!);
 };
 
 const toStr = (d: Date | null | undefined): string => {
