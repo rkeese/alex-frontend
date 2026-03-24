@@ -86,14 +86,14 @@ watch(clubId, () => {
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <!-- Club Status Card -->
       <div class="bg-white dark:bg-surface-900 p-6 rounded-xl shadow-sm border border-surface-200 dark:border-surface-700 cursor-pointer hover:shadow-md transition-shadow" @click="clubId ? router.push('/admin/club-settings') : undefined">
-        <div class="flex justify-between items-start mb-4">
-          <div>
+        <div class="flex justify-between items-start mb-4 gap-4">
+          <div class="min-w-0 flex-1">
             <div class="text-surface-500 dark:text-surface-400 font-medium text-sm">Verein</div>
             <div class="text-2xl font-bold text-surface-900 dark:text-surface-0 mt-1 truncate" :title="clubName || ''">
               {{ clubId ? (clubName || 'Aktiv') : 'Kein Verein' }}
             </div>
           </div>
-          <div class="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">
+          <div class="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
             <i class="pi pi-building text-xl"></i>
           </div>
         </div>
