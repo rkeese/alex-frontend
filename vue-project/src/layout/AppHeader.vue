@@ -12,23 +12,6 @@ const menu = ref();
 
 const items = [
     {
-        label: 'Profile',
-        icon: 'pi pi-user',
-        command: () => {
-            // router.push('/profile');
-        }
-    },
-    {
-        label: 'Settings',
-        icon: 'pi pi-cog',
-        command: () => {
-            // router.push('/settings');
-        }
-    },
-    {
-        separator: true
-    },
-    {
         label: 'Logout',
         icon: 'pi pi-sign-out',
         command: () => {
