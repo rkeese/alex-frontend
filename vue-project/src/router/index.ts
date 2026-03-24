@@ -157,7 +157,7 @@ const router = createRouter({
         {
           path: 'documents',
           name: 'documents',
-          component: PlaceholderView,
+          component: () => import('../views/documents/DocumentManagementView.vue'),
           meta: { permission: 'documents:read' }
         },
         {          path: 'admin/club-settings',

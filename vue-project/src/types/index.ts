@@ -221,10 +221,30 @@ export interface CalendarEvent {
     updated_at?: string;
 }
 
+export interface DocumentCategory {
+    id: string;
+    club_id: string;
+    name: string;
+    description: string | null;
+    sort_order: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface DocumentInfo {
+    id: string;
+    club_id: string;
+    name: string;
+    category_id: string | null;
+    description: string | null;
+    created_at: string;
+    updated_at: string;
+    category_name: string | null;
+}
+
 export interface Document {
     id?: string;
-    name?: string; // Assuming name is returned
-    // Add other fields if known, otherwise generic
+    name?: string;
 }
 
 export interface ImportResponse {

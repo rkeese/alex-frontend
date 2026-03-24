@@ -12,6 +12,8 @@ import type {
     SepaXmlRequest,
     CalendarEvent,
     Document,
+    DocumentCategory,
+    DocumentInfo,
     ImportResponse,
     BoardMember,
     BoardMemberCreateRequest,
@@ -786,16 +788,49 @@ class ApiClient {
         return response.blob();
     }
 
-    // Documents
-    async getDocuments(): Promise<Document[]> {
-        return this.request<Document[]>('/documents', {
+    // Document Categories
+    async getDocumentCategories(): Promise<DocumentCategory[]> {
+        return this.request<DocumentCategory[]>('/document-categories', {
             headers: this.getHeaders(),
         });
     }
 
-    async uploadDocument(file: File): Promise<Document> {
+    async createDocumentCategory(data: { name: string; description?: string; sort_order?: number }): Promise<DocumentCategory> {
+        return this.request<DocumentCategory>('/document-categories', {
+            method: 'POST',
+            headers: this.getHeaders(),
+            body: JSON.stringify(data),
+        });
+    }
+
+    async updateDocumentCategory(id: string, data: { name: string; description?: string; sort_order?: number }): Promise<DocumentCategory> {
+        return this.request<DocumentCategory>(`/document-categories/${id}`, {
+            method: 'PUT',
+            headers: this.getHeaders(),
+            body: JSON.stringify(data),
+        });
+    }
+
+    async deleteDocumentCategory(id: string): Promise<void> {
+        return this.request<void>(`/document-categories/${id}`, {
+            method: 'DELETE',
+            headers: this.getHeaders(),
+        });
+    }
+
+    // Documents
+    async getDocuments(categoryId?: string): Promise<DocumentInfo[]> {
+        const params = categoryId ? `?category_id=${encodeURIComponent(categoryId)}` : '';
+        return this.request<DocumentInfo[]>(`/documents${params}`, {
+            headers: this.getHeaders(),
+        });
+    }
+
+    async uploadDocument(file: File, categoryId?: string, description?: string): Promise<DocumentInfo> {
         const formData = new FormData();
         formData.append('file', file);
+        if (categoryId) formData.append('category_id', categoryId);
+        if (description) formData.append('description', description);
         
         const headers = this.getHeaders();
         // @ts-ignore - Content-Type must be undefined for FormData to set boundary
@@ -807,16 +842,48 @@ class ApiClient {
             body: formData,
         });
         
-        if (!response.ok) throw new Error('Upload failed');
+        if (!response.ok) {
+            let errorMsg = 'Upload failed';
+            try {
+                const text = await response.text();
+                const json = JSON.parse(text);
+                if (json.error) errorMsg = json.error;
+                else if (json.message) errorMsg = json.message;
+            } catch { /* keep default */ }
+            throw new Error(errorMsg);
+        }
         return response.json();
     }
 
-    async downloadDocument(id: string): Promise<Blob> {
+    async updateDocument(id: string, data: { name: string; category_id?: string | null; description?: string }): Promise<DocumentInfo> {
+        return this.request<DocumentInfo>(`/documents/${id}`, {
+            method: 'PUT',
+            headers: this.getHeaders(),
+            body: JSON.stringify(data),
+        });
+    }
+
+    async downloadDocument(id: string, fileName?: string): Promise<void> {
         const response = await fetch(`${BASE_URL}/documents/${id}/download`, {
             headers: this.getHeaders(),
         });
         if (!response.ok) throw new Error('Download failed');
-        return response.blob();
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName || 'download';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+    }
+
+    async deleteDocument(id: string): Promise<void> {
+        return this.request<void>(`/documents/${id}`, {
+            method: 'DELETE',
+            headers: this.getHeaders(),
+        });
     }
 }
 
