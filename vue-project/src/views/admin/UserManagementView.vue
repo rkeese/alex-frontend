@@ -17,6 +17,9 @@ const error = ref<string | null>(null);
 const dialogVisible = ref(false);
 const selectedUser = ref<User | null>(null);
 const processingRoleId = ref<string | null>(null);
+const blockingUserId = ref<string | null>(null);
+const confirmBlockDialog = ref(false);
+const userToToggleBlock = ref<User | null>(null);
 
 // Batch Edit State
 const editingRoles = ref<any[]>([]);
@@ -103,6 +106,10 @@ const loadData = async () => {
                 if ((!existing.roles || existing.roles.length === 0) && u.roles && u.roles.length > 0) {
                      existing.roles = u.roles;
                 }
+                // Preserve is_blocked from club user data if available
+                if (u.is_blocked !== undefined) {
+                    existing.is_blocked = u.is_blocked;
+                }
             } else {
                 userMap.set(u.id.toLowerCase(), { ...u, roles: u.roles || [] });
             }
@@ -110,6 +117,24 @@ const loadData = async () => {
 
         users.value = Array.from(userMap.values());
         roles.value = rolesData;
+
+        // Enrich is_blocked for users where it was not provided by the list endpoint
+        // (e.g. Club Admins who fall back to members/board data which lack is_blocked)
+        const usersNeedingBlockStatus = users.value.filter(u => u.is_blocked === undefined);
+        if (usersNeedingBlockStatus.length > 0) {
+            const detailPromises = usersNeedingBlockStatus.map(u =>
+                api.getUser(u.id, false).catch(() => null)
+            );
+            const details = await Promise.all(detailPromises);
+            details.forEach(detail => {
+                if (detail && detail.id && 'is_blocked' in detail) {
+                    const idx = users.value.findIndex(u => u.id.toLowerCase() === detail.id.toLowerCase());
+                    if (idx !== -1) {
+                        users.value[idx] = { ...users.value[idx], is_blocked: !!detail.is_blocked };
+                    }
+                }
+            });
+        }
     } catch (e: any) {
         console.error('Failed to load admin data', e);
         error.value = e.message || 'Failed to load data';
@@ -121,6 +146,32 @@ const loadData = async () => {
 onMounted(() => {
     loadData();
 });
+
+const confirmToggleBlock = (user: User) => {
+    userToToggleBlock.value = user;
+    confirmBlockDialog.value = true;
+};
+
+const toggleBlockUser = async () => {
+    const user = userToToggleBlock.value;
+    if (!user) return;
+    blockingUserId.value = user.id;
+    confirmBlockDialog.value = false;
+    try {
+        const newBlockedState = !user.is_blocked;
+        await api.updateUser(user.id, { is_blocked: newBlockedState });
+        // Update local state immediately so the UI reflects the change
+        const idx = users.value.findIndex(u => u.id === user.id);
+        if (idx !== -1) {
+            users.value[idx] = { ...users.value[idx], is_blocked: newBlockedState };
+        }
+    } catch (e: any) {
+        alert('Failed to update user: ' + (e.message || 'Unknown error'));
+    } finally {
+        blockingUserId.value = null;
+        userToToggleBlock.value = null;
+    }
+};
 
 const openAssignRoleDialog = async (user: User) => {
     // Optimistically set selected user to what we have from the list
@@ -336,7 +387,7 @@ const isRoleAssigned = (roleName: string) => {
     <div class="card">
         <h1 class="text-2xl font-bold text-gray-800 mb-4">User Management</h1>
         
-        <div class="flex justify-end mb-4">
+        <div v-if="authStore.isSystemAdmin" class="flex justify-end mb-4">
              <Button label="Manually Assign Role (By User ID)" icon="pi pi-user-plus" severity="secondary" @click="openManualAssign" />
         </div>
 
@@ -360,9 +411,25 @@ const isRoleAssigned = (roleName: string) => {
                     </div>
                 </template>
             </Column>
-            <Column header="Actions" style="width: 15%">
+            <Column header="Blocked" style="width: 8%">
                 <template #body="slotProps">
-                    <Button label="Assign Role" icon="pi pi-user-edit" size="small" @click="openAssignRoleDialog(slotProps.data)" />
+                    <span v-if="slotProps.data.is_blocked" class="bg-red-100 text-red-700 text-xs font-semibold px-2 py-1 rounded">Blocked</span>
+                    <span v-else class="bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded">Active</span>
+                </template>
+            </Column>
+            <Column header="Actions" style="width: 22%">
+                <template #body="slotProps">
+                    <div class="flex gap-2">
+                        <Button v-if="authStore.isSystemAdmin" label="Assign Role" icon="pi pi-user-edit" size="small" @click="openAssignRoleDialog(slotProps.data)" />
+                        <Button
+                            :label="slotProps.data.is_blocked ? 'Unblock' : 'Block'"
+                            :icon="slotProps.data.is_blocked ? 'pi pi-lock-open' : 'pi pi-lock'"
+                            :severity="slotProps.data.is_blocked ? 'success' : 'danger'"
+                            size="small"
+                            :loading="blockingUserId === slotProps.data.id"
+                            @click="confirmToggleBlock(slotProps.data)"
+                        />
+                    </div>
                 </template>
             </Column>
         </DataTable>
@@ -419,6 +486,23 @@ const isRoleAssigned = (roleName: string) => {
                     <Button label="Cancel" text severity="secondary" @click="dialogVisible = false" :disabled="isSaving" />
                     <Button label="Save Changes" icon="pi pi-check" @click="saveChanges" :loading="isSaving" />
                 </div>
+            </div>
+        </Dialog>
+        <Dialog v-model:visible="confirmBlockDialog" :header="userToToggleBlock?.is_blocked ? 'Unblock User' : 'Block User'" :modal="true" class="w-full md:w-[28rem]">
+            <p class="mb-4">
+                Are you sure you want to <strong>{{ userToToggleBlock?.is_blocked ? 'unblock' : 'block' }}</strong> user
+                <strong>{{ userToToggleBlock?.email }}</strong>?
+            </p>
+            <p v-if="!userToToggleBlock?.is_blocked" class="text-sm text-red-600 mb-4">
+                A blocked user will no longer be able to log in.
+            </p>
+            <div class="flex justify-end gap-2">
+                <Button label="Cancel" text severity="secondary" @click="confirmBlockDialog = false" />
+                <Button
+                    :label="userToToggleBlock?.is_blocked ? 'Unblock' : 'Block'"
+                    :severity="userToToggleBlock?.is_blocked ? 'success' : 'danger'"
+                    @click="toggleBlockUser"
+                />
             </div>
         </Dialog>
     </div>

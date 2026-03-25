@@ -257,6 +257,7 @@ export interface User {
     email: string;
     first_name?: string;
     last_name?: string;
+    is_blocked?: boolean;
     roles?: (string | { name?: string; role?: string; club_id?: string })[];
 }
 

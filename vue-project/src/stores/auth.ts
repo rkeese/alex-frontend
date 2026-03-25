@@ -18,6 +18,11 @@ export const useAuthStore = defineStore('auth', () => {
     
     const isAuthenticated = computed(() => !!token.value);
     
+    const isClubAdmin = computed(() => {
+        const lowerRoles = Array.from(roles.value).map(r => r.toLowerCase());
+        return lowerRoles.includes('admin') || lowerRoles.includes('administrator');
+    });
+
     const userRoleLabel = computed(() => {
         if (isSystemAdmin.value) return 'System Administrator';
         if (roles.value.size === 0) return 'User';
@@ -247,7 +252,7 @@ export const useAuthStore = defineStore('auth', () => {
         sessionStorage.setItem('clubName', name);
     }
 
-    return { token, clubId, clubName, isAuthenticated, permissions, roles, isSystemAdmin, userEmail, userName, mustChangePassword, userId, userRoleLabel, hasPermission, login, register, logout, setClub };
+    return { token, clubId, clubName, isAuthenticated, permissions, roles, isSystemAdmin, isClubAdmin, userEmail, userName, mustChangePassword, userId, userRoleLabel, hasPermission, login, register, logout, setClub };
 });
 
 function parseJwt (token: string) {
