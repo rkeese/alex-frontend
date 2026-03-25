@@ -130,7 +130,7 @@ const loadData = async () => {
                 if (detail && detail.id && 'is_blocked' in detail) {
                     const idx = users.value.findIndex(u => u.id.toLowerCase() === detail.id.toLowerCase());
                     if (idx !== -1) {
-                        users.value[idx] = { ...users.value[idx], is_blocked: !!detail.is_blocked };
+                        users.value[idx] = { ...users.value[idx], is_blocked: !!detail.is_blocked } as User;
                     }
                 }
             });
@@ -163,7 +163,7 @@ const toggleBlockUser = async () => {
         // Update local state immediately so the UI reflects the change
         const idx = users.value.findIndex(u => u.id === user.id);
         if (idx !== -1) {
-            users.value[idx] = { ...users.value[idx], is_blocked: newBlockedState };
+            users.value[idx] = { ...users.value[idx], is_blocked: newBlockedState } as User;
         }
     } catch (e: any) {
         alert('Benutzer konnte nicht aktualisiert werden: ' + (e.message || 'Unbekannter Fehler'));
