@@ -40,7 +40,7 @@ const switchClub = (club: Club) => {
 };
 
 const deleteClub = async (club: Club) => {
-    if (!confirm(`Are you sure you want to delete club "${club.name}"? This is irreversible!`)) {
+    if (!confirm(`Sind Sie sicher, dass Sie den Verein "${club.name}" löschen möchten? Dies kann nicht rückgängig gemacht werden!`)) {
         return;
     }
 
@@ -55,7 +55,7 @@ const deleteClub = async (club: Club) => {
         }
     } catch (e: any) {
          console.error('Failed to delete club', e);
-         alert('Failed to delete club: ' + e.message);
+         alert('Verein konnte nicht gelöscht werden: ' + e.message);
     }
 }
 </script>
@@ -63,8 +63,8 @@ const deleteClub = async (club: Club) => {
 <template>
     <div class="card">
         <div class="flex justify-between items-center mb-4">
-            <h1 class="text-2xl font-bold">Club Management</h1>
-            <Button icon="pi pi-refresh" label="Refresh" @click="loadData" :loading="loading" />
+            <h1 class="text-2xl font-bold">Vereinsverwaltung</h1>
+            <Button icon="pi pi-refresh" label="Aktualisieren" @click="loadData" :loading="loading" />
         </div>
 
         <div v-if="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
@@ -76,15 +76,15 @@ const deleteClub = async (club: Club) => {
             <Column field="id" header="ID"></Column>
             <Column header="Status">
                 <template #body="slotProps">
-                     <span v-if="authStore.clubId === slotProps.data.id" class="text-green-600 font-bold">Active Context</span>
+                     <span v-if="authStore.clubId === slotProps.data.id" class="text-green-600 font-bold">Aktiver Kontext</span>
                 </template>
             </Column>
-            <Column header="Actions">
+            <Column header="Aktionen">
                 <template #body="slotProps">
                     <div class="flex gap-2">
                         <Button 
                             icon="pi pi-arrow-right-arrow-left" 
-                            label="Switch To" 
+                            label="Wechseln" 
                             severity="info" 
                             size="small"
                             @click="switchClub(slotProps.data)"
@@ -92,7 +92,7 @@ const deleteClub = async (club: Club) => {
                         />
                         <Button 
                             icon="pi pi-trash" 
-                            label="Delete" 
+                            label="Löschen" 
                             severity="danger" 
                             size="small"
                             @click="deleteClub(slotProps.data)" 

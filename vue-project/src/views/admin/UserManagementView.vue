@@ -166,7 +166,7 @@ const toggleBlockUser = async () => {
             users.value[idx] = { ...users.value[idx], is_blocked: newBlockedState };
         }
     } catch (e: any) {
-        alert('Failed to update user: ' + (e.message || 'Unknown error'));
+        alert('Benutzer konnte nicht aktualisiert werden: ' + (e.message || 'Unbekannter Fehler'));
     } finally {
         blockingUserId.value = null;
         userToToggleBlock.value = null;
@@ -329,10 +329,10 @@ const saveChanges = async () => {
         // Improve wording if it is the Duplicate Error from backend
         // Backend often sends "Duplicate entry ..." for 500/409
         if (msg.toLowerCase().includes('duplicate')) {
-             msg = "Some roles are already assigned. Refreshing data...";
+             msg = "Einige Rollen sind bereits zugewiesen. Daten werden aktualisiert...";
         }
         
-        alert('Failed to save changes: ' + msg);
+        alert('Änderungen konnten nicht gespeichert werden: ' + msg);
         // On error, let's reload to ensure UI matches reality
         await loadData();
     } finally {
@@ -385,23 +385,23 @@ const isRoleAssigned = (roleName: string) => {
 
 <template>
     <div class="card">
-        <h1 class="text-2xl font-bold text-gray-800 mb-4">User Management</h1>
+        <h1 class="text-2xl font-bold text-gray-800 mb-4">Benutzerverwaltung</h1>
         
         <div v-if="authStore.isSystemAdmin" class="flex justify-end mb-4">
-             <Button label="Manually Assign Role (By User ID)" icon="pi pi-user-plus" severity="secondary" @click="openManualAssign" />
+             <Button label="Rolle manuell zuweisen (nach Benutzer-ID)" icon="pi pi-user-plus" severity="secondary" @click="openManualAssign" />
         </div>
 
         <div v-if="error" class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative mb-4" role="alert">
-            <strong class="font-bold">Notice:</strong>
-            <span class="block sm:inline"> Could not fetch user list directly ({{ error }}). You can still assign roles manually if you know the User ID.</span>
+            <strong class="font-bold">Hinweis:</strong>
+            <span class="block sm:inline"> Benutzerliste konnte nicht direkt abgerufen werden ({{ error }}). Sie können Rollen weiterhin manuell zuweisen, wenn Sie die Benutzer-ID kennen.</span>
         </div>
 
         <DataTable :value="users" :loading="loading" stripedRows class="p-datatable-sm">
-             <template #empty> No users found. </template>
-            <Column field="email" header="Email" sortable></Column>
-            <Column field="first_name" header="First Name" sortable></Column>
-            <Column field="last_name" header="Last Name" sortable></Column>
-            <Column header="Roles">
+             <template #empty> Keine Benutzer gefunden. </template>
+            <Column field="email" header="E-Mail" sortable></Column>
+            <Column field="first_name" header="Vorname" sortable></Column>
+            <Column field="last_name" header="Nachname" sortable></Column>
+            <Column header="Rollen">
                 <template #body="slotProps">
                     <div class="flex flex-wrap gap-1">
                         <!-- Handle string or object roles -->
@@ -411,18 +411,18 @@ const isRoleAssigned = (roleName: string) => {
                     </div>
                 </template>
             </Column>
-            <Column header="Blocked" style="width: 8%">
+            <Column header="Gesperrt" style="width: 8%">
                 <template #body="slotProps">
-                    <span v-if="slotProps.data.is_blocked" class="bg-red-100 text-red-700 text-xs font-semibold px-2 py-1 rounded">Blocked</span>
-                    <span v-else class="bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded">Active</span>
+                    <span v-if="slotProps.data.is_blocked" class="bg-red-100 text-red-700 text-xs font-semibold px-2 py-1 rounded">Gesperrt</span>
+                    <span v-else class="bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded">Aktiv</span>
                 </template>
             </Column>
-            <Column header="Actions" style="width: 22%">
+            <Column header="Aktionen" style="width: 22%">
                 <template #body="slotProps">
                     <div class="flex gap-2">
-                        <Button v-if="authStore.isSystemAdmin" label="Assign Role" icon="pi pi-user-edit" size="small" @click="openAssignRoleDialog(slotProps.data)" />
+                        <Button v-if="authStore.isSystemAdmin" label="Rolle zuweisen" icon="pi pi-user-edit" size="small" @click="openAssignRoleDialog(slotProps.data)" />
                         <Button
-                            :label="slotProps.data.is_blocked ? 'Unblock' : 'Block'"
+                            :label="slotProps.data.is_blocked ? 'Entsperren' : 'Sperren'"
                             :icon="slotProps.data.is_blocked ? 'pi pi-lock-open' : 'pi pi-lock'"
                             :severity="slotProps.data.is_blocked ? 'success' : 'danger'"
                             size="small"
@@ -434,24 +434,24 @@ const isRoleAssigned = (roleName: string) => {
             </Column>
         </DataTable>
 
-        <Dialog v-model:visible="dialogVisible" header="Manage User Roles" :modal="true" class="w-full md:w-[40rem]">
+        <Dialog v-model:visible="dialogVisible" header="Benutzerrollen verwalten" :modal="true" class="w-full md:w-[40rem]">
             <div class="flex flex-col gap-4">
                 <div v-if="selectedUser">
-                    <p class="font-semibold">User: {{ selectedUser.email }}</p>
+                    <p class="font-semibold">Benutzer: {{ selectedUser.email }}</p>
                 </div>
                 <div v-else>
-                     <label for="manual_user_id" class="block mb-1">User UUID</label>
-                     <input id="manual_user_id" v-model="manualUserId" class="w-full p-2 border rounded" placeholder="e.g. 550e8400-e29b-..." />
-                     <p class="text-xs text-gray-500 mt-1">Enter the UUID of the user from the database.</p>
+                     <label for="manual_user_id" class="block mb-1">Benutzer-UUID</label>
+                     <input id="manual_user_id" v-model="manualUserId" class="w-full p-2 border rounded" placeholder="z.B. 550e8400-e29b-..." />
+                     <p class="text-xs text-gray-500 mt-1">Geben Sie die UUID des Benutzers aus der Datenbank ein.</p>
                 </div>
 
                 <div class="mt-2 border rounded max-h-[300px] overflow-y-auto">
                     <table class="w-full text-sm text-left">
                         <thead class="bg-gray-100 text-gray-700 uppercase font-medium">
                             <tr>
-                                <th class="px-4 py-2">Role Name</th>
-                                <th class="px-4 py-2 text-center w-24">Active</th>
-                                <th class="px-4 py-2 text-center w-24">Inactive</th>
+                                <th class="px-4 py-2">Rollenname</th>
+                                <th class="px-4 py-2 text-center w-24">Aktiv</th>
+                                <th class="px-4 py-2 text-center w-24">Inaktiv</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200">
@@ -483,23 +483,23 @@ const isRoleAssigned = (roleName: string) => {
                 </div>
 
                 <div class="flex justify-end gap-2 mt-4 pt-3 border-t">
-                    <Button label="Cancel" text severity="secondary" @click="dialogVisible = false" :disabled="isSaving" />
-                    <Button label="Save Changes" icon="pi pi-check" @click="saveChanges" :loading="isSaving" />
+                    <Button label="Abbrechen" text severity="secondary" @click="dialogVisible = false" :disabled="isSaving" />
+                    <Button label="Änderungen speichern" icon="pi pi-check" @click="saveChanges" :loading="isSaving" />
                 </div>
             </div>
         </Dialog>
-        <Dialog v-model:visible="confirmBlockDialog" :header="userToToggleBlock?.is_blocked ? 'Unblock User' : 'Block User'" :modal="true" class="w-full md:w-[28rem]">
+        <Dialog v-model:visible="confirmBlockDialog" :header="userToToggleBlock?.is_blocked ? 'Benutzer entsperren' : 'Benutzer sperren'" :modal="true" class="w-full md:w-[28rem]">
             <p class="mb-4">
-                Are you sure you want to <strong>{{ userToToggleBlock?.is_blocked ? 'unblock' : 'block' }}</strong> user
-                <strong>{{ userToToggleBlock?.email }}</strong>?
+                Sind Sie sicher, dass Sie den Benutzer <strong>{{ userToToggleBlock?.email }}</strong>
+                <strong>{{ userToToggleBlock?.is_blocked ? 'entsperren' : 'sperren' }}</strong> möchten?
             </p>
             <p v-if="!userToToggleBlock?.is_blocked" class="text-sm text-red-600 mb-4">
-                A blocked user will no longer be able to log in.
+                Ein gesperrter Benutzer kann sich nicht mehr anmelden.
             </p>
             <div class="flex justify-end gap-2">
-                <Button label="Cancel" text severity="secondary" @click="confirmBlockDialog = false" />
+                <Button label="Abbrechen" text severity="secondary" @click="confirmBlockDialog = false" />
                 <Button
-                    :label="userToToggleBlock?.is_blocked ? 'Unblock' : 'Block'"
+                    :label="userToToggleBlock?.is_blocked ? 'Entsperren' : 'Sperren'"
                     :severity="userToToggleBlock?.is_blocked ? 'success' : 'danger'"
                     @click="toggleBlockUser"
                 />
