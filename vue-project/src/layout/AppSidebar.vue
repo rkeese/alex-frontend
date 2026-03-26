@@ -79,6 +79,8 @@ const items = computed(() => {
         menuItems.push({ label: 'Verwaltung', icon: 'pi pi-cog', items: adminItems } as any);
     }
 
+    menuItems.push({ label: 'Über', icon: 'pi pi-info-circle', command: () => router.push('/about') });
+
     return menuItems;
 });
 </script>

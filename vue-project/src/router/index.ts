@@ -181,6 +181,11 @@ const router = createRouter({
             name: 'admin-clubs',
             component: () => import('../views/admin/ClubManagementView.vue'),
             meta: { permission: 'clubs:manage' }
+        },
+        {
+          path: 'about',
+          name: 'about',
+          component: () => import('../views/AboutView.vue'),
         }
       ]
     },
