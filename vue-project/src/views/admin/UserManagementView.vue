@@ -21,6 +21,14 @@ const blockingUserId = ref<string | null>(null);
 const confirmBlockDialog = ref(false);
 const userToToggleBlock = ref<User | null>(null);
 
+// Password Reset State
+const confirmResetPasswordDialog = ref(false);
+const userToResetPassword = ref<User | null>(null);
+const resetPasswordResult = ref<string | null>(null);
+const resetPasswordResultDialog = ref(false);
+const resettingPasswordUserId = ref<string | null>(null);
+const passwordCopied = ref(false);
+
 // Batch Edit State
 const editingRoles = ref<any[]>([]);
 const originalRoles = ref<any[]>([]);
@@ -150,6 +158,49 @@ onMounted(() => {
 const confirmToggleBlock = (user: User) => {
     userToToggleBlock.value = user;
     confirmBlockDialog.value = true;
+};
+
+const confirmResetPassword = (user: User) => {
+    userToResetPassword.value = user;
+    confirmResetPasswordDialog.value = true;
+};
+
+const resetPassword = async () => {
+    const user = userToResetPassword.value;
+    if (!user) return;
+    resettingPasswordUserId.value = user.id;
+    confirmResetPasswordDialog.value = false;
+    try {
+        const result = await api.resetUserPassword(user.id);
+        resetPasswordResult.value = result.password;
+        resetPasswordResultDialog.value = true;
+        passwordCopied.value = false;
+    } catch (e: any) {
+        alert('Passwort konnte nicht zurückgesetzt werden: ' + (e.message || 'Unbekannter Fehler'));
+    } finally {
+        resettingPasswordUserId.value = null;
+        userToResetPassword.value = null;
+    }
+};
+
+const copyPassword = async () => {
+    if (resetPasswordResult.value) {
+        try {
+            await navigator.clipboard.writeText(resetPasswordResult.value);
+            passwordCopied.value = true;
+        } catch {
+            // Fallback for insecure contexts
+            const textArea = document.createElement('textarea');
+            textArea.value = resetPasswordResult.value;
+            textArea.style.position = 'fixed';
+            textArea.style.opacity = '0';
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            passwordCopied.value = true;
+        }
+    }
 };
 
 const toggleBlockUser = async () => {
@@ -422,6 +473,15 @@ const isRoleAssigned = (roleName: string) => {
                     <div class="flex gap-2">
                         <Button v-if="authStore.isSystemAdmin" label="Rolle zuweisen" icon="pi pi-user-edit" size="small" @click="openAssignRoleDialog(slotProps.data)" />
                         <Button
+                            v-if="authStore.isSystemAdmin || authStore.isClubAdmin"
+                            label="Passwort zurücksetzen"
+                            icon="pi pi-key"
+                            severity="warn"
+                            size="small"
+                            :loading="resettingPasswordUserId === slotProps.data.id"
+                            @click="confirmResetPassword(slotProps.data)"
+                        />
+                        <Button
                             :label="slotProps.data.is_blocked ? 'Entsperren' : 'Sperren'"
                             :icon="slotProps.data.is_blocked ? 'pi pi-lock-open' : 'pi pi-lock'"
                             :severity="slotProps.data.is_blocked ? 'success' : 'danger'"
@@ -488,6 +548,47 @@ const isRoleAssigned = (roleName: string) => {
                 </div>
             </div>
         </Dialog>
+        <!-- Password Reset Confirmation Dialog -->
+        <Dialog v-model:visible="confirmResetPasswordDialog" header="Passwort zurücksetzen" :modal="true" class="w-full md:w-[28rem]">
+            <p class="mb-4">
+                Möchten Sie das Passwort für <strong>{{ userToResetPassword?.email }}</strong> wirklich zurücksetzen?
+            </p>
+            <p class="text-sm text-yellow-600 mb-4">
+                Es wird ein neues zufälliges Passwort generiert. Der Benutzer muss das Passwort beim nächsten Login ändern.
+            </p>
+            <div class="flex justify-end gap-2">
+                <Button label="Abbrechen" text severity="secondary" @click="confirmResetPasswordDialog = false" />
+                <Button label="Passwort zurücksetzen" severity="warn" icon="pi pi-key" @click="resetPassword" />
+            </div>
+        </Dialog>
+
+        <!-- Password Reset Result Dialog -->
+        <Dialog v-model:visible="resetPasswordResultDialog" header="Neues Passwort" :modal="true" :closable="true" class="w-full md:w-[32rem]">
+            <div class="flex flex-col gap-4">
+                <p class="font-semibold">Das Passwort wurde erfolgreich zurückgesetzt.</p>
+                <div class="bg-gray-100 border border-gray-300 rounded p-3 flex items-center justify-between gap-2">
+                    <code class="text-lg font-mono break-all select-all">{{ resetPasswordResult }}</code>
+                    <Button
+                        :icon="passwordCopied ? 'pi pi-check' : 'pi pi-copy'"
+                        :severity="passwordCopied ? 'success' : 'secondary'"
+                        text
+                        @click="copyPassword"
+                        v-tooltip.top="'In Zwischenablage kopieren'"
+                    />
+                </div>
+                <div class="bg-yellow-50 border border-yellow-200 rounded p-3 text-sm text-yellow-800">
+                    <ul class="list-disc list-inside space-y-1">
+                        <li>Bitte teilen Sie dieses Passwort dem Benutzer sicher mit.</li>
+                        <li>Der Benutzer muss das Passwort beim nächsten Login ändern.</li>
+                        <li><strong>Wichtig:</strong> Das Passwort wird nur einmal angezeigt und kann nach dem Schließen dieses Dialogs nicht mehr abgerufen werden.</li>
+                    </ul>
+                </div>
+                <div class="flex justify-end pt-2 border-t">
+                    <Button label="Schließen" @click="resetPasswordResultDialog = false; resetPasswordResult = null;" />
+                </div>
+            </div>
+        </Dialog>
+
         <Dialog v-model:visible="confirmBlockDialog" :header="userToToggleBlock?.is_blocked ? 'Benutzer entsperren' : 'Benutzer sperren'" :modal="true" class="w-full md:w-[28rem]">
             <p class="mb-4">
                 Sind Sie sicher, dass Sie den Benutzer <strong>{{ userToToggleBlock?.email }}</strong>

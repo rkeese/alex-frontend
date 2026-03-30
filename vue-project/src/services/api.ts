@@ -250,6 +250,13 @@ class ApiClient {
         });
     }
 
+    async resetUserPassword(userId: string): Promise<{ password: string }> {
+        return this.request<{ password: string }>(`/users/${userId}/reset-password`, {
+            method: 'POST',
+            headers: this.getHeaders(true),
+        });
+    }
+
     // Members
     async getMembers(): Promise<Member[]> {
         return this.request<Member[]>('/members', {
