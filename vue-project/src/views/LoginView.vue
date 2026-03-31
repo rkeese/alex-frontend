@@ -49,7 +49,7 @@ const handleLogin = async () => {
     loading.value = true;
     error.value = '';
     try {
-        await authStore.login({ email: email.value, password: password.value });
+        await authStore.login({ email: email.value.trim().toLowerCase(), password: password.value });
         router.push('/');
     } catch (e) {
         error.value = 'Login failed. Please check your credentials.';
@@ -68,11 +68,11 @@ const handleCreateAssociation = async () => {
     try {
         // Try to register first. If user exists (409), fall back to login.
         try {
-            await authStore.register({ email: registerEmail.value, password: registerPassword.value });
+            await authStore.register({ email: registerEmail.value.trim().toLowerCase(), password: registerPassword.value });
         } catch (regError: any) {
             if (regError.message && regError.message.includes('409')) {
                 // User already registered, try to login with provided credentials
-                await authStore.login({ email: registerEmail.value, password: registerPassword.value });
+                await authStore.login({ email: registerEmail.value.trim().toLowerCase(), password: registerPassword.value });
             } else {
                 throw regError;
             }
@@ -89,7 +89,7 @@ const handleCreateAssociation = async () => {
         await api.createClub(clubPayload);
         
         // Login again to refresh permissions (admin role for new club)
-        await authStore.login({ email: registerEmail.value, password: registerPassword.value });
+        await authStore.login({ email: registerEmail.value.trim().toLowerCase(), password: registerPassword.value });
         
         router.push('/');
     } catch (e: any) {
