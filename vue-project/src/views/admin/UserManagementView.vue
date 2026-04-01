@@ -214,7 +214,13 @@ const toggleBlockUser = async () => {
         // Update local state immediately so the UI reflects the change
         const idx = users.value.findIndex(u => u.id === user.id);
         if (idx !== -1) {
-            users.value[idx] = { ...users.value[idx], is_blocked: newBlockedState } as User;
+            const updates: Partial<User> = { is_blocked: newBlockedState };
+            // When unblocking, backend also resets brute-force lockout
+            if (!newBlockedState) {
+                updates.failed_login_attempts = 0;
+                updates.locked_until = null;
+            }
+            users.value[idx] = { ...users.value[idx], ...updates } as User;
         }
     } catch (e: any) {
         alert('Benutzer konnte nicht aktualisiert werden: ' + (e.message || 'Unbekannter Fehler'));
@@ -391,6 +397,17 @@ const saveChanges = async () => {
     }
 };
 
+const isLockedUntilFuture = (lockedUntil: string | null | undefined): boolean => {
+    if (!lockedUntil) return false;
+    return new Date(lockedUntil) > new Date();
+};
+
+const formatLockedUntil = (lockedUntil: string | null | undefined): string => {
+    if (!lockedUntil) return '';
+    const date = new Date(lockedUntil);
+    return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+};
+
 const isRoleAssigned = (roleName: string) => {
     // Check against EDITING ROLES, not selectedUser.value.roles
     // This allows the UI to reflect the temporary state
@@ -466,6 +483,19 @@ const isRoleAssigned = (roleName: string) => {
                 <template #body="slotProps">
                     <span v-if="slotProps.data.is_blocked" class="bg-red-100 text-red-700 text-xs font-semibold px-2 py-1 rounded">Gesperrt</span>
                     <span v-else class="bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded">Aktiv</span>
+                </template>
+            </Column>
+            <Column header="Login-Status" style="width: 12%">
+                <template #body="slotProps">
+                    <div class="flex flex-col gap-1">
+                        <span v-if="isLockedUntilFuture(slotProps.data.locked_until)" class="bg-orange-100 text-orange-700 text-xs font-semibold px-2 py-1 rounded">
+                            Gesperrt bis {{ formatLockedUntil(slotProps.data.locked_until) }}
+                        </span>
+                        <span v-else-if="slotProps.data.failed_login_attempts && slotProps.data.failed_login_attempts > 0" class="bg-yellow-100 text-yellow-700 text-xs font-semibold px-2 py-1 rounded">
+                            {{ slotProps.data.failed_login_attempts }} Fehlversuch{{ slotProps.data.failed_login_attempts > 1 ? 'e' : '' }}
+                        </span>
+                        <span v-else class="text-gray-400 text-xs">—</span>
+                    </div>
                 </template>
             </Column>
             <Column header="Aktionen" style="width: 22%">

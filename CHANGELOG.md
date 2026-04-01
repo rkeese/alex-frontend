@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-04-01
+
+### Added
+- **Brute-Force-Schutz im Login**: Bei HTTP 429 (Account temporär gesperrt oder Rate Limit) wird ein Countdown-Timer angezeigt und der Login-Button für die Dauer der Sperre deaktiviert.
+- **Gesperrt-Meldung (HTTP 403)**: Wenn ein Konto von einem Administrator gesperrt wurde, erscheint eine spezifische Fehlermeldung.
+- **Login-Status in Benutzerverwaltung**: Neue Spalte zeigt Fehlversuche (`failed_login_attempts`) und aktive Brute-Force-Sperren (`locked_until`) an.
+- **ApiError-Klasse** in `api.ts`: Fehler aus API-Aufrufen enthalten jetzt den HTTP-Status und den `Retry-After`-Header.
+
+### Changed
+- `User`-Interface um `failed_login_attempts` und `locked_until` erweitert.
+- Beim Entsperren eines Benutzers wird der Lockout-Status in der UI sofort zurückgesetzt (Backend setzt `failed_login_attempts` und `locked_until` automatisch zurück).
+
 ## 2026-03-31
 
 ### Fixed

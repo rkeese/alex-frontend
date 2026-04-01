@@ -26,6 +26,18 @@ import type {
 
 const BASE_URL = '/api/v1';
 
+export class ApiError extends Error {
+    status: number;
+    retryAfter: number | null;
+
+    constructor(message: string, status: number, retryAfter: number | null = null) {
+        super(message);
+        this.name = 'ApiError';
+        this.status = status;
+        this.retryAfter = retryAfter;
+    }
+}
+
 class ApiClient {
     private getHeaders(includeClubId: boolean = true): HeadersInit {
         const headers: HeadersInit = {
@@ -75,7 +87,12 @@ class ApiClient {
                 } catch (e) {
                     // ignore parsing error
                 }
-                throw new Error(`${errorMsg} (${response.status})`);
+                const retryAfter = response.headers.get('Retry-After');
+                throw new ApiError(
+                    `${errorMsg} (${response.status})`,
+                    response.status,
+                    retryAfter ? parseInt(retryAfter, 10) : null
+                );
             }
             if (response.status === 204) {
                 return {} as T;

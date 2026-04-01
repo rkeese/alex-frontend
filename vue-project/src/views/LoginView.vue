@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { api } from '@/services/api';
+import { ApiError } from '@/services/api';
 import InputText from 'primevue/inputtext';
 import Password from 'primevue/password';
 import Button from 'primevue/button';
@@ -16,6 +17,43 @@ const email = ref('');
 const password = ref('');
 const loading = ref(false);
 const error = ref('');
+
+// Lockout state
+const lockoutSeconds = ref(0);
+let lockoutTimer: ReturnType<typeof setInterval> | null = null;
+
+const startLockoutCountdown = (seconds: number) => {
+    stopLockoutCountdown();
+    lockoutSeconds.value = seconds;
+    lockoutTimer = setInterval(() => {
+        lockoutSeconds.value--;
+        if (lockoutSeconds.value <= 0) {
+            stopLockoutCountdown();
+            error.value = '';
+        }
+    }, 1000);
+};
+
+const stopLockoutCountdown = () => {
+    if (lockoutTimer) {
+        clearInterval(lockoutTimer);
+        lockoutTimer = null;
+    }
+    lockoutSeconds.value = 0;
+};
+
+onUnmounted(() => {
+    stopLockoutCountdown();
+});
+
+const formatLockoutTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    if (mins > 0) {
+        return `${mins} Min. ${secs.toString().padStart(2, '0')} Sek.`;
+    }
+    return `${secs} Sek.`;
+};
 
 // Create Association Mode
 const isCreateAllMode = ref(false);
@@ -46,13 +84,26 @@ const toggleCreateMode = () => {
 };
 
 const handleLogin = async () => {
+    if (lockoutSeconds.value > 0) return;
     loading.value = true;
     error.value = '';
     try {
         await authStore.login({ email: email.value.trim().toLowerCase(), password: password.value });
         router.push('/');
-    } catch (e) {
-        error.value = 'Login failed. Please check your credentials.';
+    } catch (e: any) {
+        if (e instanceof ApiError) {
+            if (e.status === 429) {
+                const retryAfter = e.retryAfter || 60;
+                error.value = `Zu viele Anmeldeversuche. Bitte warten Sie noch ${formatLockoutTime(retryAfter)}.`;
+                startLockoutCountdown(retryAfter);
+            } else if (e.status === 403) {
+                error.value = 'Ihr Konto wurde von einem Administrator gesperrt. Bitte wenden Sie sich an den Vereinsadministrator.';
+            } else {
+                error.value = 'Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Zugangsdaten.';
+            }
+        } else {
+            error.value = 'Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Zugangsdaten.';
+        }
     } finally {
         loading.value = false;
     }
@@ -127,7 +178,11 @@ const handleCreateAssociation = async () => {
                     </div>
 
                     <form @submit.prevent="handleLogin" class="flex flex-col gap-6">
-                        <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
+                        <Message v-if="error && lockoutSeconds > 0" severity="warn" :closable="false">
+                            {{ error }}
+                            <div class="mt-2 font-semibold">Erneuter Versuch in: {{ formatLockoutTime(lockoutSeconds) }}</div>
+                        </Message>
+                        <Message v-else-if="error" severity="error" :closable="false">{{ error }}</Message>
                         
                         <div class="flex flex-col gap-2">
                             <label for="email" class="font-medium text-surface-900 dark:text-surface-0">Email</label>
@@ -142,7 +197,7 @@ const handleCreateAssociation = async () => {
                             <Password id="password" v-model="password" class="w-full" :feedback="false" toggleMask inputClass="w-full" placeholder="Enter your password" required />
                         </div>
 
-                        <Button type="submit" label="Sign In" icon="pi pi-sign-in" :loading="loading" class="w-full" />
+                        <Button type="submit" label="Sign In" icon="pi pi-sign-in" :loading="loading" :disabled="lockoutSeconds > 0" class="w-full" />
                         
                         <div class="text-center mt-4">
                             <span class="text-surface-600 dark:text-surface-300">New here? </span>

@@ -258,6 +258,8 @@ export interface User {
     first_name?: string;
     last_name?: string;
     is_blocked?: boolean;
+    failed_login_attempts?: number;
+    locked_until?: string | null;
     roles?: (string | { name?: string; role?: string; club_id?: string })[];
 }
 
