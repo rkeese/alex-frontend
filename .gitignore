@@ -1,3 +1,6 @@
+# Internal documentation
+doc/
+
 # Logs
 logs
 *.log
