@@ -47,6 +47,12 @@ const categoryForm = ref<{ id: string | null; name: string; description: string;
 });
 const savingCategory = ref(false);
 
+// PDF Preview dialog
+const previewDialogVisible = ref(false);
+const previewBlobUrl = ref<string | null>(null);
+const previewDocName = ref('');
+const previewLoading = ref(false);
+
 // --- Category options for dropdowns ---
 const categoryOptions = computed(() => [
     { label: 'Keine Kategorie', value: null },
@@ -244,6 +250,34 @@ const formatDate = (dateString: string) => {
     if (!dateString) return '';
     return new Date(dateString).toLocaleDateString('de-DE');
 };
+
+const isPdf = (fileName: string) => {
+    return fileName.toLowerCase().endsWith('.pdf');
+};
+
+// --- PDF Preview ---
+const openPreview = async (doc: DocumentInfo) => {
+    previewDocName.value = doc.name;
+    previewLoading.value = true;
+    previewDialogVisible.value = true;
+    try {
+        previewBlobUrl.value = await api.getDocumentBlobUrl(doc.id);
+    } catch (error: any) {
+        toast.add({ severity: 'error', summary: 'Fehler', detail: error.message || 'Vorschau konnte nicht geladen werden.', life: 5000 });
+        previewDialogVisible.value = false;
+    } finally {
+        previewLoading.value = false;
+    }
+};
+
+const closePreview = () => {
+    previewDialogVisible.value = false;
+    if (previewBlobUrl.value) {
+        window.URL.revokeObjectURL(previewBlobUrl.value);
+        previewBlobUrl.value = null;
+    }
+    previewDocName.value = '';
+};
 </script>
 
 <template>
@@ -340,6 +374,7 @@ const formatDate = (dateString: string) => {
             <Column header="Aktionen" style="width: 15%">
                 <template #body="slotProps">
                     <div class="flex gap-1">
+                        <Button v-if="isPdf(slotProps.data.name)" icon="pi pi-eye" severity="success" text rounded @click="openPreview(slotProps.data)" title="PDF-Vorschau" />
                         <Button icon="pi pi-download" severity="info" text rounded @click="downloadDoc(slotProps.data)" title="Herunterladen" />
                         <Button v-if="canWrite" icon="pi pi-pencil" severity="secondary" text rounded @click="openEditDialog(slotProps.data)" title="Bearbeiten" />
                         <Button v-if="canWrite" icon="pi pi-trash" severity="danger" text rounded @click="deleteDoc(slotProps.data)" title="Löschen" />
@@ -432,6 +467,27 @@ const formatDate = (dateString: string) => {
                 <Button label="Abbrechen" severity="secondary" @click="categoryDialogVisible = false" />
                 <Button label="Speichern" icon="pi pi-check" :loading="savingCategory" @click="submitCategory" />
             </template>
+        </Dialog>
+
+        <!-- PDF Preview Dialog -->
+        <Dialog
+            :visible="previewDialogVisible"
+            @update:visible="val => { if (!val) closePreview(); }"
+            :header="'Vorschau: ' + previewDocName"
+            :modal="true"
+            :style="{ width: '90vw', height: '90vh' }"
+            :contentStyle="{ height: 'calc(90vh - 6rem)', padding: '0', overflow: 'hidden', display: 'flex' }"
+            maximizable
+        >
+            <div v-if="previewLoading" class="flex items-center justify-center" style="width: 100%; height: 100%">
+                <i class="pi pi-spin pi-spinner text-4xl text-primary-500"></i>
+            </div>
+            <iframe
+                v-else-if="previewBlobUrl"
+                :src="previewBlobUrl + '#toolbar=1&navpanes=1'"
+                style="width: 100%; height: 100%; border: none; flex: 1;"
+                type="application/pdf"
+            ></iframe>
         </Dialog>
 
         <ConfirmDialog />

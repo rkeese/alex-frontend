@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-04-02
+
+### Added
+- **PDF-Vorschau in Dokumentenverwaltung**: PDF-Dokumente können direkt im Browser in einem maximierbaren Dialog angezeigt werden, ohne sie herunterladen zu müssen. Ein Augen-Icon (👁) erscheint in der Aktionen-Spalte bei allen `.pdf`-Dateien.
+- Neue API-Methode `getDocumentBlobUrl()` zum Laden von Dokumenten als Blob-URL für die Inline-Anzeige.
+
 ## 2026-04-01
 
 ### Added

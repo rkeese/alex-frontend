@@ -903,6 +903,16 @@ class ApiClient {
         document.body.removeChild(a);
     }
 
+    async getDocumentBlobUrl(id: string): Promise<string> {
+        const response = await fetch(`${BASE_URL}/documents/${id}/download`, {
+            headers: this.getHeaders(),
+        });
+        if (!response.ok) throw new Error('Vorschau konnte nicht geladen werden');
+        const blob = await response.blob();
+        const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+        return window.URL.createObjectURL(pdfBlob);
+    }
+
     async deleteDocument(id: string): Promise<void> {
         return this.request<void>(`/documents/${id}`, {
             method: 'DELETE',
