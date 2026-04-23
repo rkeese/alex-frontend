@@ -302,6 +302,26 @@ class ApiClient {
         document.body.removeChild(a);
     }
 
+    async downloadContactListPdf(): Promise<void> {
+        const response = await fetch(`${BASE_URL}/members/contact-list/pdf`, {
+            headers: this.getHeaders(),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to download PDF');
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'kontaktliste.pdf';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    }
+
     async getMemberStatistics(year: number): Promise<import('../types').MemberStatistics[]> {
         return this.request<import('../types').MemberStatistics[]>(`/members/statistics?year=${year}`, {
             headers: this.getHeaders(),

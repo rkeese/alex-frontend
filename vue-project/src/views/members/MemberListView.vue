@@ -106,6 +106,15 @@ const exportMembers = async () => {
         alert('Export fehlgeschlagen');
     }
 };
+
+const exportContactListPDF = async () => {
+    try {
+        await api.downloadContactListPdf();
+    } catch (error) {
+        console.error('Failed to download contact list PDF', error);
+        alert('PDF-Export fehlgeschlagen');
+    }
+};
 </script>
 
 <template>
@@ -113,6 +122,7 @@ const exportMembers = async () => {
         <div class="flex justify-between items-center mb-4">
             <h1 class="text-2xl font-bold text-gray-800">Mitglieder</h1>
             <div class="flex gap-2">
+                <Button v-if="authStore.hasPermission('members:read')" label="Kontaktliste (PDF)" icon="pi pi-file-pdf" severity="info" @click="exportContactListPDF" />
                 <Button v-if="authStore.hasPermission('members:read')" label="Exportieren" icon="pi pi-download" severity="secondary" @click="exportMembers" />
                 <Button v-if="authStore.hasPermission('members:write')" label="Importieren" icon="pi pi-upload" severity="secondary" @click="router.push('/members/import')" />
                 <Button v-if="authStore.hasPermission('members:write')" label="Neues Mitglied" icon="pi pi-plus" @click="router.push('/members/create')" />
