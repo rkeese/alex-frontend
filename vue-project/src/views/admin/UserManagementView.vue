@@ -29,6 +29,11 @@ const resetPasswordResultDialog = ref(false);
 const resettingPasswordUserId = ref<string | null>(null);
 const passwordCopied = ref(false);
 
+// Unlock Login (Brute-Force Reset) State
+const confirmUnlockLoginDialog = ref(false);
+const userToUnlockLogin = ref<User | null>(null);
+const unlockingLoginUserId = ref<string | null>(null);
+
 // Batch Edit State
 const editingRoles = ref<any[]>([]);
 const originalRoles = ref<any[]>([]);
@@ -158,6 +163,35 @@ onMounted(() => {
 const confirmToggleBlock = (user: User) => {
     userToToggleBlock.value = user;
     confirmBlockDialog.value = true;
+};
+
+const confirmUnlockLogin = (user: User) => {
+    userToUnlockLogin.value = user;
+    confirmUnlockLoginDialog.value = true;
+};
+
+const unlockLogin = async () => {
+    const user = userToUnlockLogin.value;
+    if (!user) return;
+    unlockingLoginUserId.value = user.id;
+    confirmUnlockLoginDialog.value = false;
+    try {
+        await api.updateUser(user.id, { is_blocked: false });
+        const idx = users.value.findIndex(u => u.id === user.id);
+        if (idx !== -1) {
+            users.value[idx] = {
+                ...users.value[idx],
+                is_blocked: false,
+                failed_login_attempts: 0,
+                locked_until: null,
+            } as User;
+        }
+    } catch (e: any) {
+        alert('Anmeldesperre konnte nicht aufgehoben werden: ' + (e.message || 'Unbekannter Fehler'));
+    } finally {
+        unlockingLoginUserId.value = null;
+        userToUnlockLogin.value = null;
+    }
 };
 
 const confirmResetPassword = (user: User) => {
@@ -397,6 +431,12 @@ const saveChanges = async () => {
     }
 };
 
+const isBruteForceLocked = (user: User): boolean => {
+    if (user.locked_until && new Date(user.locked_until) > new Date()) return true;
+    if (user.failed_login_attempts !== undefined && user.failed_login_attempts >= 5) return true;
+    return false;
+};
+
 const isLockedUntilFuture = (lockedUntil: string | null | undefined): boolean => {
     if (!lockedUntil) return false;
     return new Date(lockedUntil) > new Date();
@@ -519,6 +559,15 @@ const isRoleAssigned = (roleName: string) => {
                             :loading="blockingUserId === slotProps.data.id"
                             @click="confirmToggleBlock(slotProps.data)"
                         />
+                        <Button
+                            v-if="!slotProps.data.is_blocked && isBruteForceLocked(slotProps.data)"
+                            label="Login entsperren"
+                            icon="pi pi-unlock"
+                            severity="warn"
+                            size="small"
+                            :loading="unlockingLoginUserId === slotProps.data.id"
+                            @click="confirmUnlockLogin(slotProps.data)"
+                        />
                     </div>
                 </template>
             </Column>
@@ -616,6 +665,25 @@ const isRoleAssigned = (roleName: string) => {
                 <div class="flex justify-end pt-2 border-t">
                     <Button label="Schließen" @click="resetPasswordResultDialog = false; resetPasswordResult = null;" />
                 </div>
+            </div>
+        </Dialog>
+
+        <Dialog v-model:visible="confirmUnlockLoginDialog" header="Anmeldesperre aufheben" :modal="true" class="w-full md:w-[28rem]">
+            <p class="mb-4">
+                Möchten Sie die Anmeldesperre für <strong>{{ userToUnlockLogin?.email }}</strong> wirklich aufheben?
+            </p>
+            <div class="bg-blue-50 border border-blue-200 rounded p-3 text-sm text-blue-800 mb-4">
+                <p v-if="userToUnlockLogin?.locked_until && new Date(userToUnlockLogin.locked_until) > new Date()">
+                    Der Benutzer ist temporär gesperrt bis {{ new Date(userToUnlockLogin.locked_until).toLocaleString('de-DE') }}.
+                </p>
+                <p v-if="userToUnlockLogin?.failed_login_attempts">
+                    Fehlgeschlagene Anmeldeversuche: <strong>{{ userToUnlockLogin.failed_login_attempts }}</strong>
+                </p>
+                <p class="mt-1">Die Fehlversuche und die temporäre Sperre werden zurückgesetzt. Der Benutzer kann sich danach wieder anmelden.</p>
+            </div>
+            <div class="flex justify-end gap-2">
+                <Button label="Abbrechen" text severity="secondary" @click="confirmUnlockLoginDialog = false" />
+                <Button label="Anmeldesperre aufheben" severity="warn" icon="pi pi-unlock" @click="unlockLogin" />
             </div>
         </Dialog>
 
