@@ -433,7 +433,7 @@ const saveChanges = async () => {
 
 const isBruteForceLocked = (user: User): boolean => {
     if (user.locked_until && new Date(user.locked_until) > new Date()) return true;
-    if (user.failed_login_attempts !== undefined && user.failed_login_attempts >= 5) return true;
+    if (user.failed_login_attempts !== undefined && user.failed_login_attempts > 0) return true;
     return false;
 };
 
